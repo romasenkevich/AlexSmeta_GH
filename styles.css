@@ -246,9 +246,15 @@ table.smeta {
 }
 
 /* Очень маленькие экраны: уменьшаем таблицу целиком, сохраняя пропорции */
-@media (max-width: 380px) {
+table.smeta th {
+  word-break: break-word;
+  hyphens: auto;
+  line-height: 1.2;
+}
+
+@media (max-width: 400px) {
   table.smeta {
-    --scale: 0.92;
+    --scale: 0.9;
     transform: scale(var(--scale));
     transform-origin: top left;
     width: calc(100% / var(--scale));
@@ -256,8 +262,28 @@ table.smeta {
   }
 }
 
+@media (max-width: 380px) {
+  table.smeta { --scale: 0.86; }
+}
+
+@media (max-width: 360px) {
+  table.smeta { --scale: 0.82; }
+}
+
 @media (max-width: 340px) {
-  table.smeta { --scale: 0.88; }
+  table.smeta { --scale: 0.78; }
+}
+
+@media (max-width: 320px) {
+  table.smeta { --scale: 0.74; }
+}
+
+@media (max-width: 300px) {
+  table.smeta { --scale: 0.7; }
+}
+
+@media (max-width: 280px) {
+  table.smeta { --scale: 0.65; }
 }
 table.smeta th, table.smeta td {
   border: 1px solid var(--border);
@@ -367,6 +393,34 @@ table.smeta td.actions { width: 40px; text-align: center; }
   table.smeta td.num { width: 34px; }
   table.smeta td.unit { width: 72px; }
   table.smeta td.price, table.smeta td.qty, table.smeta td.sum { width: 72px; }
+
+  @media (max-width: 360px) {
+    table.smeta th { font-size: 11px; padding: 6px 4px; }
+    table.smeta td input,
+    table.smeta td textarea { font-size: 12px; padding: 6px 4px; }
+    .cellText { padding: 6px 4px; font-size: 12px; }
+    table.smeta th.h-num { width: 28px; }
+    table.smeta th.h-unit { width: 58px; }
+    table.smeta th.h-price,
+    table.smeta th.h-qty,
+    table.smeta th.h-sum { width: 58px; }
+    table.smeta td.num { width: 28px; }
+    table.smeta td.unit { width: 58px; }
+    table.smeta td.price, table.smeta td.qty, table.smeta td.sum { width: 58px; }
+  }
+
+  @media (max-width: 320px) {
+    table.smeta th { font-size: 10px; padding: 5px 3px; }
+    .cellText { font-size: 11px; padding: 5px 3px; }
+    table.smeta th.h-num { width: 24px; }
+    table.smeta th.h-unit { width: 52px; }
+    table.smeta th.h-price,
+    table.smeta th.h-qty,
+    table.smeta th.h-sum { width: 52px; }
+    table.smeta td.num { width: 24px; }
+    table.smeta td.unit { width: 52px; }
+    table.smeta td.price, table.smeta td.qty, table.smeta td.sum { width: 52px; }
+  }
 
   .mrow {
     border: 1px solid var(--border);
