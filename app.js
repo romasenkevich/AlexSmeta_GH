@@ -1,5 +1,5 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
-const SITE_VERSION = "0.0.8";
+const SITE_VERSION = "0.0.9";
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -205,6 +205,15 @@ function render(state, ui) {
 
   table.className = ui.editing ? "smeta smeta-edit" : "smeta";
   table.innerHTML = `
+    <colgroup>
+      <col class="col-num" />
+      <col class="col-name" />
+      <col class="col-unit" />
+      <col class="col-price" />
+      <col class="col-qty" />
+      <col class="col-sum" />
+      ${ui.editing ? `<col class="col-actions" />` : ``}
+    </colgroup>
     <thead>
       <tr>
         <th class="h-num">№</th>

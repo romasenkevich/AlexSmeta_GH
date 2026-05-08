@@ -47,14 +47,20 @@ body.mode-mobile .btn-icon { width: 52px; height: 52px; }
 body.mode-mobile .doc-title { font-size: 22px; padding: 12px 12px; }
 body.mode-mobile .doc-meta { grid-template-columns: 1fr; gap: 12px; }
 body.mode-mobile .doc-meta-field input { font-size: 18px; padding: 12px 8px; }
-body.mode-mobile table.smeta th { padding: 14px 10px; font-size: 16px; }
-body.mode-mobile table.smeta td input { padding: 14px 12px; font-size: 18px; }
+body.mode-mobile table.smeta th { padding: 8px 6px; font-size: 14px; }
+body.mode-mobile table.smeta td input,
+body.mode-mobile table.smeta td textarea { padding: 8px 7px; font-size: 16px; }
 body.mode-mobile .total-bar { padding: 16px 8px; }
 body.mode-mobile .total-bar .amount { font-size: 28px; }
 body.mode-mobile .estimate-item { padding: 16px 14px; border-radius: 14px; }
 body.mode-mobile .estimate-item .name { font-size: 18px; }
 body.mode-mobile .estimate-item .date { font-size: 15px; }
-body.mode-mobile .row-del { width: 48px; height: 48px; font-size: 24px; }
+/* Крестик только в таблице — компактный, иначе не влезает в col-actions */
+body.mode-mobile table.smeta .row-del {
+  width: 30px;
+  height: 30px;
+  font-size: 20px;
+}
 
 .topbar {
   display: flex;
@@ -259,51 +265,25 @@ table.smeta th, table.smeta td {
 }
 
 /*
- * Пропорции колонок фиксированы в % (сумма 100%) — при любом масштабе экрана
- * соотношение ячеек не меняется; уменьшение — только через transform: scale на мобильных.
+ * Ширины колонок — через <colgroup>, чтобы колонка «удалить» была фикс. (px),
+ * а не 5% от таблицы (иначе крестик съезжает и обрезается).
  */
-table.smeta:not(.smeta-edit) th.h-num,
-table.smeta:not(.smeta-edit) td.num {
-  width: 5%;
-}
-table.smeta:not(.smeta-edit) th.h-name,
-table.smeta:not(.smeta-edit) td.c-name {
-  width: 43%;
-}
-table.smeta:not(.smeta-edit) th.h-unit,
-table.smeta:not(.smeta-edit) td.unit,
-table.smeta:not(.smeta-edit) th.h-price,
-table.smeta:not(.smeta-edit) td.price,
-table.smeta:not(.smeta-edit) th.h-qty,
-table.smeta:not(.smeta-edit) td.qty,
-table.smeta:not(.smeta-edit) th.h-sum,
-table.smeta:not(.smeta-edit) td.sum {
+table.smeta col.col-num { width: 5%; }
+table.smeta col.col-name { width: 43%; }
+table.smeta:not(.smeta-edit) col.col-unit,
+table.smeta:not(.smeta-edit) col.col-price,
+table.smeta:not(.smeta-edit) col.col-qty,
+table.smeta:not(.smeta-edit) col.col-sum {
   width: 13%;
 }
 
-/* Режим редактирования: + колонка действий, те же пропорции по смыслу */
-table.smeta.smeta-edit th.h-num,
-table.smeta.smeta-edit td.num {
-  width: 5%;
-}
-table.smeta.smeta-edit th.h-name,
-table.smeta.smeta-edit td.c-name {
-  width: 33%;
-}
-table.smeta.smeta-edit th.h-unit,
-table.smeta.smeta-edit td.unit,
-table.smeta.smeta-edit th.h-price,
-table.smeta.smeta-edit td.price,
-table.smeta.smeta-edit th.h-qty,
-table.smeta.smeta-edit td.qty,
-table.smeta.smeta-edit th.h-sum,
-table.smeta.smeta-edit td.sum {
-  width: 14.25%;
-}
-table.smeta.smeta-edit th.h-actions,
-table.smeta.smeta-edit td.actions {
-  width: 5%;
-}
+/* Редактирование: уже «наименование», чуть шире цифры и сумма, колонка действий — px */
+table.smeta.smeta-edit col.col-name { width: 28%; }
+table.smeta.smeta-edit col.col-unit { width: 11%; }
+table.smeta.smeta-edit col.col-price { width: 14%; }
+table.smeta.smeta-edit col.col-qty { width: 12%; }
+table.smeta.smeta-edit col.col-sum { width: 18%; }
+table.smeta.smeta-edit col.col-actions { width: 44px; }
 table.smeta th {
   background: #f3f3f3;
   font-weight: 600;
@@ -365,18 +345,34 @@ table.smeta td.price, table.smeta td.qty, table.smeta td.sum { text-align: right
 table.smeta td.price input, table.smeta td.qty input { text-align: right; }
 table.smeta td.sum {
   text-align: right;
-  padding: 8px 10px;
+  padding: 0;
   background: #fafafa;
   font-variant-numeric: tabular-nums;
 }
-table.smeta td.actions { width: 40px; text-align: center; }
+table.smeta td.actions {
+  text-align: center;
+  vertical-align: middle;
+  padding: 2px 4px;
+  overflow: visible;
+}
+table.smeta th.h-actions {
+  padding: 6px 2px;
+}
 .row-del {
   background: transparent;
   border: none;
   color: var(--muted);
   cursor: pointer;
-  width: 28px; height: 28px;
+  width: 28px;
+  height: 28px;
   border-radius: 4px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 .row-del:hover { background: #fce8e6; color: var(--danger); }
 
@@ -417,6 +413,29 @@ table.smeta td.actions { width: 40px; text-align: center; }
 
   @media (max-width: 260px) {
     table.smeta { --scale: 0.52; }
+  }
+
+  /* Узкий экран: меньше padding в ячейках (иначе цифры упираются в границы при scale) */
+  .doc[data-editing="false"] table.smeta th,
+  .doc[data-editing="true"] table.smeta th {
+    padding: 5px 4px;
+    font-size: 11px;
+  }
+  .doc table.smeta td input,
+  .doc table.smeta td textarea {
+    padding: 5px 5px;
+    font-size: 14px;
+  }
+  .doc[data-editing="false"] table.smeta .cellText,
+  .doc[data-editing="true"] table.smeta .cellText {
+    padding: 5px 5px;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  .doc table.smeta td.price .cellText,
+  .doc table.smeta td.qty .cellText,
+  .doc table.smeta td.sum .cellText {
+    font-variant-numeric: auto;
   }
 
   .mrow {
@@ -546,7 +565,6 @@ table.smeta td.actions { width: 40px; text-align: center; }
 }
 .link { color: inherit; text-decoration: none; }
 .link:hover { text-decoration: underline; }
-}
 
 .sign {
   display: grid !important;
@@ -589,13 +607,18 @@ table.smeta td.actions { width: 40px; text-align: center; }
 .doc[data-editing="false"] table.smeta th {
   background: #f3f3f3;
   font-weight: 600;
-  font-size: 13px;
-  padding: 10px 8px;
 }
 
-.doc[data-editing="false"] .cellText {
-  font-size: 13px;
-  padding: 8px 10px;
+/* Крупные отступы «как экспорт» только на достаточно широком экране */
+@media (min-width: 561px) {
+  .doc[data-editing="false"] table.smeta th {
+    font-size: 13px;
+    padding: 10px 8px;
+  }
+  .doc[data-editing="false"] .cellText {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
 }
 
 .doc[data-editing="false"] .total-bar {
