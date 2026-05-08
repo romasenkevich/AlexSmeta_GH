@@ -115,6 +115,47 @@ function closeSidebar() {
   if (sidebar) sidebar.classList.remove("open");
 }
 
+function getSelectedEstimate(state) {
+  return state.estimates.find((e) => e.id === state.selectedId) ?? null;
+}
+
+function updateTotalsInDom(state) {
+  const est = getSelectedEstimate(state);
+  if (!est) return;
+  const footer = document.querySelector('[data-slot="editor-footer"]');
+  if (!footer) return;
+  const total = computeTotal(est);
+  footer.innerHTML = `
+    <span class="label">Итого:</span>
+    <span class="amount">${est.currency}${formatMoney(total)}</span>
+  `;
+}
+
+function updateRowSumInDom(state, itemId) {
+  const est = getSelectedEstimate(state);
+  if (!est) return;
+  const item = est.items.find((it) => it.id === itemId);
+  if (!item) return;
+  const tr = document.querySelector(`[data-rowid="${CSS.escape(itemId)}"]`);
+  if (!tr) return;
+  const sumCell = tr.querySelector("td.sum");
+  if (!sumCell) return;
+  sumCell.textContent = `${est.currency}${formatMoney(computeRowSum(item))}`;
+}
+
+function updateTopbarTitleInDom(state) {
+  const est = getSelectedEstimate(state);
+  const el = document.querySelector('[data-slot="topbar-title"]');
+  if (el) el.textContent = est?.name || "Смета";
+}
+
+function updateSelectedListItemNameInDom(state) {
+  const est = getSelectedEstimate(state);
+  if (!est) return;
+  const el = document.querySelector(`.estimate-item.active .name`);
+  if (el) el.textContent = est.name;
+}
+
 function render(state) {
   const list = qs('[data-slot="estimate-list"]');
   const empty = qs('[data-slot="empty-state"]');
@@ -333,9 +374,10 @@ function main() {
         const est = s.estimates.find((x) => x.id === s.selectedId);
         if (!est) return;
         est.name = t.value.trim() || "Без названия";
-        est.updatedAt = Date.now();
       });
-      rerender();
+      saveState(state);
+      updateTopbarTitleInDom(state);
+      updateSelectedListItemNameInDom(state);
       return;
     }
 
@@ -347,9 +389,8 @@ function main() {
         if (!est) return;
         if (field === "customer") est.customer = t.value;
         if (field === "executor") est.executor = t.value;
-        est.updatedAt = Date.now();
       });
-      rerender();
+      saveState(state);
       return;
     }
 
@@ -364,9 +405,8 @@ function main() {
         if (!item) return;
         if (field === "name") item.name = t.value;
         if (field === "unit") item.unit = t.value;
-        est.updatedAt = Date.now();
       });
-      rerender();
+      saveState(state);
       return;
     }
 
@@ -382,9 +422,10 @@ function main() {
         if (!item) return;
         if (field === "price") item.price = value;
         if (field === "qty") item.qty = value;
-        est.updatedAt = Date.now();
       });
-      rerender();
+      saveState(state);
+      updateRowSumInDom(state, id);
+      updateTotalsInDom(state);
     }
   });
 }
