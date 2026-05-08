@@ -283,6 +283,10 @@ function main() {
       openSidebar();
       return;
     }
+    if (action === "close-sidebar") {
+      closeSidebar();
+      return;
+    }
 
     if (action === "refresh") {
       state = ensureState(loadState());
