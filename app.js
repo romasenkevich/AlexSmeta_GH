@@ -1,5 +1,5 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
-const SITE_VERSION = "0.0.7";
+const SITE_VERSION = "0.0.8";
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -12,6 +12,15 @@ function clampToNumber(value) {
 
 function formatMoney(n) {
   return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(clampToNumber(n));
+}
+
+/** Для отображения: без незначащих нулей (10.00 → 10, 10.50 → 10.5) */
+function formatDisplayNumber(n) {
+  const v = clampToNumber(n);
+  if (!Number.isFinite(v)) return "0";
+  const rounded = Number(v.toFixed(8));
+  if (Object.is(rounded, -0)) return "0";
+  return String(rounded);
 }
 
 function fmtDate(ts) {
@@ -236,18 +245,18 @@ function render(state, ui) {
       <td class="price">
         ${
           ui.editing
-            ? `<input type="number" step="0.01" min="0" inputmode="decimal" data-action="draft-item-num" data-id="${it.id}" data-field="price" value="${escapeAttr(String(it.price ?? 0))}">`
-            : `<div class="cellText cellRight">${formatMoney(it.price ?? 0)}</div>`
+            ? `<input type="number" step="any" min="0" inputmode="decimal" data-action="draft-item-num" data-id="${it.id}" data-field="price" value="${escapeAttr(formatDisplayNumber(it.price ?? 0))}">`
+            : `<div class="cellText cellRight">${formatDisplayNumber(it.price ?? 0)}</div>`
         }
       </td>
       <td class="qty">
         ${
           ui.editing
-            ? `<input type="number" step="0.01" min="0" inputmode="decimal" data-action="draft-item-num" data-id="${it.id}" data-field="qty" value="${escapeAttr(String(it.qty ?? 0))}">`
-            : `<div class="cellText cellRight">${escapeHtml(String(it.qty ?? 0))}</div>`
+            ? `<input type="number" step="any" min="0" inputmode="decimal" data-action="draft-item-num" data-id="${it.id}" data-field="qty" value="${escapeAttr(formatDisplayNumber(it.qty ?? 0))}">`
+            : `<div class="cellText cellRight">${escapeHtml(formatDisplayNumber(it.qty ?? 0))}</div>`
         }
       </td>
-      <td class="sum"><div class="cellText cellRight" data-sum="${it.id}">${current.currency}${formatMoney(sum)}</div></td>
+      <td class="sum"><div class="cellText cellRight" data-sum="${it.id}">${current.currency}${formatDisplayNumber(sum)}</div></td>
       ${
         ui.editing
           ? `<td class="actions"><button class="row-del" type="button" data-action="draft-delete-row" data-id="${it.id}" title="Удалить">×</button></td>`
@@ -260,7 +269,7 @@ function render(state, ui) {
   const total = computeTotal(current);
   footer.innerHTML = `
     <span class="label">Итого:</span>
-    <span class="amount">${current.currency}${formatMoney(total)}</span>
+    <span class="amount">${current.currency}${formatDisplayNumber(total)}</span>
   `;
 
   sign.innerHTML = `
@@ -297,9 +306,9 @@ function buildExportHtml(estimate) {
         <td class="c-num">${idx + 1}</td>
         <td class="c-name">${escapeHtml(it.name ?? "")}</td>
         <td class="c-unit">${escapeHtml(it.unit ?? "")}</td>
-        <td class="c-price">${formatMoney(price)}</td>
-        <td class="c-qty">${qty % 1 === 0 ? String(qty) : String(qty).replace(".", ",")}</td>
-        <td class="c-sum">${formatMoney(sum)}</td>
+        <td class="c-price">${formatDisplayNumber(price)}</td>
+        <td class="c-qty">${formatDisplayNumber(qty)}</td>
+        <td class="c-sum">${formatDisplayNumber(sum)}</td>
       </tr>
     `;
   });
@@ -367,13 +376,13 @@ function buildExportHtml(estimate) {
           </tr>
         </thead>
         <tbody>
-          ${rows.join("") || `<tr><td class="c-num">1</td><td></td><td class="c-unit"></td><td class="c-price">0.00</td><td class="c-qty">0</td><td class="c-sum">0.00</td></tr>`}
+          ${rows.join("") || `<tr><td class="c-num">1</td><td></td><td class="c-unit"></td><td class="c-price">0</td><td class="c-qty">0</td><td class="c-sum">0</td></tr>`}
         </tbody>
       </table>
 
       <div class="totalRow">
         <div>Итого:</div>
-        <div class="val">${formatMoney(total)} ${escapeHtml(currency)}</div>
+        <div class="val">${formatDisplayNumber(total)} ${escapeHtml(currency)}</div>
       </div>
 
       <div class="sign">
@@ -403,9 +412,9 @@ function buildExportInnerHtml(estimate) {
         <td class="c-num">${idx + 1}</td>
         <td class="c-name">${escapeHtml(it.name ?? "")}</td>
         <td class="c-unit">${escapeHtml(it.unit ?? "")}</td>
-        <td class="c-price">${formatMoney(price)}</td>
-        <td class="c-qty">${qty % 1 === 0 ? String(qty) : String(qty).replace(".", ",")}</td>
-        <td class="c-sum">${formatMoney(sum)}</td>
+        <td class="c-price">${formatDisplayNumber(price)}</td>
+        <td class="c-qty">${formatDisplayNumber(qty)}</td>
+        <td class="c-sum">${formatDisplayNumber(sum)}</td>
       </tr>
     `;
   });
@@ -455,13 +464,13 @@ function buildExportInnerHtml(estimate) {
         </tr>
       </thead>
       <tbody>
-        ${rows.join("") || `<tr><td class="c-num">1</td><td></td><td class="c-unit"></td><td class="c-price">0.00</td><td class="c-qty">0</td><td class="c-sum">0.00</td></tr>`}
+        ${rows.join("") || `<tr><td class="c-num">1</td><td></td><td class="c-unit"></td><td class="c-price">0</td><td class="c-qty">0</td><td class="c-sum">0</td></tr>`}
       </tbody>
     </table>
 
     <div class="x-total">
       <div>Итого:</div>
-      <div class="val">${formatMoney(total)} ${escapeHtml(currency)}</div>
+      <div class="val">${formatDisplayNumber(total)} ${escapeHtml(currency)}</div>
     </div>
 
     <div class="x-sign">
@@ -521,12 +530,12 @@ function main() {
     const item = draft.items.find((it) => it.id === itemId);
     if (!item) return;
     const sumEl = document.querySelector(`[data-sum="${CSS.escape(itemId)}"]`);
-    if (sumEl) sumEl.textContent = `${draft.currency}${formatMoney(computeRowSum(item))}`;
+    if (sumEl) sumEl.textContent = `${draft.currency}${formatDisplayNumber(computeRowSum(item))}`;
     const footer = document.querySelector('[data-slot="editor-footer"]');
     if (footer) {
       footer.innerHTML = `
         <span class="label">Итого:</span>
-        <span class="amount">${draft.currency}${formatMoney(computeTotal(draft))}</span>
+        <span class="amount">${draft.currency}${formatDisplayNumber(computeTotal(draft))}</span>
       `;
     }
   }
@@ -682,6 +691,21 @@ function main() {
       if (field === "qty") item.qty = value;
       updateSumAndTotalInDom(ui.draft, id);
     }
+  });
+
+  /* При фокусе — выделить всё: новый ввод сразу заменяет старое значение */
+  document.addEventListener("focusin", (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement) && !(t instanceof HTMLTextAreaElement)) return;
+    const a = t.dataset.action;
+    if (a !== "draft-item" && a !== "draft-item-num" && a !== "draft-edit") return;
+    requestAnimationFrame(() => {
+      try {
+        t.select();
+      } catch {
+        /* Safari / type=number */
+      }
+    });
   });
 }
 
