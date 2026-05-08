@@ -48,8 +48,6 @@ body.mode-mobile .doc-title { font-size: 22px; padding: 12px 12px; }
 body.mode-mobile .doc-meta { grid-template-columns: 1fr; gap: 12px; }
 body.mode-mobile .doc-meta-field input { font-size: 18px; padding: 12px 8px; }
 body.mode-mobile table.smeta th { padding: 8px 6px; font-size: 14px; }
-body.mode-mobile table.smeta td input,
-body.mode-mobile table.smeta td textarea { padding: 8px 7px; font-size: 16px; }
 body.mode-mobile .total-bar { padding: 16px 8px; }
 body.mode-mobile .total-bar .amount { font-size: 28px; }
 body.mode-mobile .estimate-item { padding: 16px 14px; border-radius: 14px; }
@@ -268,21 +266,15 @@ table.smeta th, table.smeta td {
  * Ширины колонок — через <colgroup>, чтобы колонка «удалить» была фикс. (px),
  * а не 5% от таблицы (иначе крестик съезжает и обрезается).
  */
+/* Первые 6 колонок — как в режиме просмотра; в редактировании добавляется только col-actions */
 table.smeta col.col-num { width: 5%; }
 table.smeta col.col-name { width: 43%; }
-table.smeta:not(.smeta-edit) col.col-unit,
-table.smeta:not(.smeta-edit) col.col-price,
-table.smeta:not(.smeta-edit) col.col-qty,
-table.smeta:not(.smeta-edit) col.col-sum {
+table.smeta col.col-unit,
+table.smeta col.col-price,
+table.smeta col.col-qty,
+table.smeta col.col-sum {
   width: 13%;
 }
-
-/* Редактирование: уже «наименование», чуть шире цифры и сумма, колонка действий — px */
-table.smeta.smeta-edit col.col-name { width: 28%; }
-table.smeta.smeta-edit col.col-unit { width: 11%; }
-table.smeta.smeta-edit col.col-price { width: 14%; }
-table.smeta.smeta-edit col.col-qty { width: 12%; }
-table.smeta.smeta-edit col.col-sum { width: 18%; }
 table.smeta.smeta-edit col.col-actions { width: 44px; }
 table.smeta th {
   background: #f3f3f3;
@@ -290,39 +282,41 @@ table.smeta th {
   padding: 10px 8px;
   font-size: 13px;
 }
-table.smeta td input {
+
+/* Поля в таблице только при редактировании — визуально как .cellText в просмотре */
+.doc[data-editing="true"] table.smeta td input,
+.doc[data-editing="true"] table.smeta td textarea {
   width: 100%;
   border: none;
   background: transparent;
   padding: 8px 10px;
-  font-size: 14px;
-  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #111;
   font-family: inherit;
+  border-radius: 0;
 }
-table.smeta td textarea {
-  width: 100%;
-  border: none;
-  background: transparent;
-  padding: 8px 10px;
-  font-size: 14px;
-  color: var(--text);
-  font-family: inherit;
+.doc[data-editing="true"] table.smeta td textarea {
   resize: none;
   overflow: hidden;
-  line-height: 1.35;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
-table.smeta td input:focus {
-  outline: 2px solid var(--primary);
-  outline-offset: -2px;
-  background: #fff;
+.doc[data-editing="true"] table.smeta td input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
-table.smeta td textarea:focus {
-  outline: 2px solid var(--primary);
+.doc[data-editing="true"] table.smeta td input[type="number"]::-webkit-outer-spin-button,
+.doc[data-editing="true"] table.smeta td input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.doc[data-editing="true"] table.smeta td input:focus,
+.doc[data-editing="true"] table.smeta td textarea:focus {
+  outline: 1px solid #111;
   outline-offset: -2px;
-  background: #fff;
+  background: transparent;
 }
 
 .docTitleInput {
@@ -334,7 +328,14 @@ table.smeta td textarea:focus {
   font-weight: 800;
   padding: 4px 8px;
 }
-.docTitleInput:focus { outline: none; background: #f0f7ff; border-radius: 10px; }
+.doc[data-editing="true"] .docTitleInput {
+  font: inherit;
+  color: #111;
+}
+.doc[data-editing="true"] .docTitleInput:focus {
+  outline: none;
+  background: transparent;
+}
 
 .cellText { padding: 8px 10px; }
 .cellRight { text-align: right; font-variant-numeric: tabular-nums; }
@@ -354,9 +355,6 @@ table.smeta td.actions {
   vertical-align: middle;
   padding: 2px 4px;
   overflow: visible;
-}
-table.smeta th.h-actions {
-  padding: 6px 2px;
 }
 .row-del {
   background: transparent;
@@ -421,10 +419,11 @@ table.smeta th.h-actions {
     padding: 5px 4px;
     font-size: 11px;
   }
-  .doc table.smeta td input,
-  .doc table.smeta td textarea {
+  body.mode-mobile .doc[data-editing="true"] table.smeta td input,
+  body.mode-mobile .doc[data-editing="true"] table.smeta td textarea {
     padding: 5px 5px;
-    font-size: 14px;
+    font-size: 12px;
+    line-height: 1.3;
   }
   .doc[data-editing="false"] table.smeta .cellText,
   .doc[data-editing="true"] table.smeta .cellText {
@@ -434,7 +433,9 @@ table.smeta th.h-actions {
   }
   .doc table.smeta td.price .cellText,
   .doc table.smeta td.qty .cellText,
-  .doc table.smeta td.sum .cellText {
+  .doc table.smeta td.sum .cellText,
+  .doc[data-editing="true"] table.smeta td.price input,
+  .doc[data-editing="true"] table.smeta td.qty input {
     font-variant-numeric: auto;
   }
 
@@ -592,47 +593,62 @@ table.smeta th.h-actions {
   .doc[data-editing="false"] .sign { grid-template-columns: 1fr 1fr; gap: 26px; }
 }
 
-/* Режим просмотра: стили 1-в-1 как у экспорта */
-.doc[data-editing="false"] .docTitle {
+/* Заголовок и таблица: один «экспортный» вид в просмотре и при редактировании */
+.doc[data-editing="false"] .docTitle,
+.doc[data-editing="true"] .docTitle {
   font-size: 18px;
   font-weight: 700;
   margin: 0 0 10px;
 }
 
 .doc[data-editing="false"] table.smeta th,
-.doc[data-editing="false"] table.smeta td {
+.doc[data-editing="true"] table.smeta th,
+.doc[data-editing="false"] table.smeta td,
+.doc[data-editing="true"] table.smeta td {
   border-color: #111;
 }
 
-.doc[data-editing="false"] table.smeta th {
+.doc[data-editing="false"] table.smeta th,
+.doc[data-editing="true"] table.smeta th {
   background: #f3f3f3;
   font-weight: 600;
 }
 
-/* Крупные отступы «как экспорт» только на достаточно широком экране */
+.doc[data-editing="true"] table.smeta td.price input,
+.doc[data-editing="true"] table.smeta td.qty input {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Крупные отступы ячеек только на достаточно широком экране */
 @media (min-width: 561px) {
-  .doc[data-editing="false"] table.smeta th {
+  .doc[data-editing="false"] table.smeta th,
+  .doc[data-editing="true"] table.smeta th {
     font-size: 13px;
     padding: 10px 8px;
   }
-  .doc[data-editing="false"] .cellText {
+  .doc[data-editing="false"] .cellText,
+  .doc[data-editing="true"] table.smeta td input,
+  .doc[data-editing="true"] table.smeta td textarea {
     font-size: 13px;
     padding: 8px 10px;
   }
 }
 
-.doc[data-editing="false"] .total-bar {
+.doc[data-editing="false"] .total-bar,
+.doc[data-editing="true"] .total-bar {
   border-top: none;
   margin-top: 14px;
   padding: 12px 8px;
 }
 
-.doc[data-editing="false"] .total-bar .label {
+.doc[data-editing="false"] .total-bar .label,
+.doc[data-editing="true"] .total-bar .label {
   font-weight: 600;
   color: #111;
 }
 
-.doc[data-editing="false"] .total-bar .amount {
+.doc[data-editing="false"] .total-bar .amount,
+.doc[data-editing="true"] .total-bar .amount {
   color: #111;
   font-size: 22px;
   font-weight: 700;
