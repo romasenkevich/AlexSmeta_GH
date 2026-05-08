@@ -329,10 +329,6 @@ function buildExportHtml(estimate) {
       .toolbar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 14px; }
       .btn { padding: 8px 12px; border: 1px solid #bbb; background: #fff; cursor: pointer; border-radius: 8px; }
       .title { font-size: 18px; font-weight: 700; margin: 0 0 10px; text-align: center; }
-      .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 18px 0 16px; }
-      .meta .field { display: flex; gap: 10px; align-items: baseline; }
-      .meta label { font-weight: 600; }
-      .line { flex: 1; border-bottom: 1px solid #bbb; min-height: 16px; color: #111; padding: 0 6px; }
 
       table { width: 100%; border-collapse: collapse; }
       th, td { border: 1px solid var(--border); padding: 8px 10px; vertical-align: top; }
@@ -347,6 +343,7 @@ function buildExportHtml(estimate) {
       .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
       .sign .sline { border-bottom: 1px solid #bbb; height: 18px; }
       .sign .lbl { color: var(--muted); font-size: 12px; margin-top: 6px; }
+      .sign .val { font-size: 13px; color: #111; min-height: 18px; padding: 0 2px; }
 
       @media print {
         .toolbar { display: none; }
@@ -361,11 +358,6 @@ function buildExportHtml(estimate) {
       </div>
 
       <h1 class="title">${escapeHtml(title)}</h1>
-
-      <div class="meta">
-        <div class="field"><label>Заказчик</label><div class="line">${escapeHtml(customer)}</div></div>
-        <div class="field"><label>Исполнитель</label><div class="line">${escapeHtml(executor)}</div></div>
-      </div>
 
       <table>
         <thead>
@@ -390,10 +382,12 @@ function buildExportHtml(estimate) {
 
       <div class="sign">
         <div>
+          <div class="val">${escapeHtml(customer)}</div>
           <div class="sline"></div>
           <div class="lbl">Заказчик</div>
         </div>
         <div>
+          <div class="val">${escapeHtml(executor)}</div>
           <div class="sline"></div>
           <div class="lbl">Исполнитель</div>
         </div>
@@ -430,10 +424,6 @@ function buildExportInnerHtml(estimate) {
     <style>
       :root { --border: #111; --muted: #444; }
       .x-title { font-size: 18px; font-weight: 700; margin: 0 0 10px; text-align: center; }
-      .x-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 18px 0 16px; }
-      .x-meta .field { display: flex; gap: 10px; align-items: baseline; }
-      .x-meta label { font-weight: 600; }
-      .x-line { flex: 1; border-bottom: 1px solid #bbb; min-height: 16px; color: #111; padding: 0 6px; }
 
       .x-table { width: 100%; border-collapse: collapse; }
       .x-table th, .x-table td { border: 1px solid var(--border); padding: 8px 10px; vertical-align: top; }
@@ -448,18 +438,14 @@ function buildExportInnerHtml(estimate) {
       .x-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
       .x-sign .sline { border-bottom: 1px solid #bbb; height: 18px; }
       .x-sign .lbl { color: var(--muted); font-size: 12px; margin-top: 6px; }
+      .x-sign .val { font-size: 13px; color: #111; min-height: 18px; padding: 0 2px; }
 
       @media (max-width: 560px) {
-        .x-meta { grid-template-columns: 1fr; gap: 12px; }
+        .x-sign { grid-template-columns: 1fr; gap: 16px; }
       }
     </style>
 
     <h2 class="x-title">${escapeHtml(title)}</h2>
-
-    <div class="x-meta">
-      <div class="field"><label>Заказчик</label><div class="x-line">${escapeHtml(customer)}</div></div>
-      <div class="field"><label>Исполнитель</label><div class="x-line">${escapeHtml(executor)}</div></div>
-    </div>
 
     <table class="x-table">
       <thead>
@@ -483,8 +469,8 @@ function buildExportInnerHtml(estimate) {
     </div>
 
     <div class="x-sign">
-      <div><div class="sline"></div><div class="lbl">Заказчик</div></div>
-      <div><div class="sline"></div><div class="lbl">Исполнитель</div></div>
+      <div><div class="val">${escapeHtml(customer)}</div><div class="sline"></div><div class="lbl">Заказчик</div></div>
+      <div><div class="val">${escapeHtml(executor)}</div><div class="sline"></div><div class="lbl">Исполнитель</div></div>
     </div>
   `;
 }
