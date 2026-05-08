@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Привет!</title>
+    <meta name="description" content="Базовая страница для GitHub Pages" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="hero">
+        <p class="badge" aria-label="Статус">GitHub Pages</p>
+        <h1 class="title">Привет!</h1>
+        <p class="subtitle">
+          Это базовая страница. Скажите, что добавить дальше — и я сделаю.
+        </p>
+      </header>
+
+      <section class="card" aria-labelledby="next">
+        <h2 id="next">Дальше можно</h2>
+        <ul class="list">
+          <li>добавить меню и секции</li>
+          <li>подключить шрифт/тему</li>
+          <li>сделать форму обратной связи (без бэкенда)</li>
+        </ul>
+      </section>
+
+      <footer class="footer">
+        <span>© <span id="year"></span></span>
+        <a class="link" href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a>
+      </footer>
+    </main>
+
+    <script>
+      document.getElementById("year").textContent = String(new Date().getFullYear());
+    </script>
+  </body>
+</html>
