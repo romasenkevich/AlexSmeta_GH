@@ -1,5 +1,5 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
-const SITE_VERSION = "0.0.6";
+const SITE_VERSION = "0.0.7";
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -194,16 +194,17 @@ function render(state, ui) {
     ? `<input class="docTitleInput" type="text" data-action="draft-edit" data-field="name" value="${escapeAttr(current.name ?? "")}" />`
     : escapeHtml(current.name ?? "");
 
+  table.className = ui.editing ? "smeta smeta-edit" : "smeta";
   table.innerHTML = `
     <thead>
       <tr>
         <th class="h-num">№</th>
-        <th>Наименование</th>
+        <th class="h-name">Наименование</th>
         <th class="h-unit">Ед. изм</th>
         <th class="h-price">Цена</th>
         <th class="h-qty">Кол-во</th>
         <th class="h-sum">Сумма</th>
-        ${ui.editing ? `<th style="width:40px"></th>` : ``}
+        ${ui.editing ? `<th class="h-actions" aria-label="Удалить"></th>` : ``}
       </tr>
     </thead>
     <tbody></tbody>
