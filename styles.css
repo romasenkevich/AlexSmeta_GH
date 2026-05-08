@@ -485,6 +485,7 @@ table.smeta td.actions { width: 40px; text-align: center; }
 /* На телефоне переносим подписи в 2 строки только в режиме редактирования */
 @media (max-width: 560px) {
   .doc[data-editing="true"] .sign { grid-template-columns: 1fr; gap: 16px; }
+  .doc[data-editing="false"] .sign { grid-template-columns: 1fr 1fr; gap: 26px; }
 }
 
 .editorHeader {

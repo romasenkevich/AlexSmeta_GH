@@ -190,7 +190,7 @@ function render(state, ui) {
   editOnlyActions.style.display = ui.editing ? "block" : "none";
 
   titleEl.innerHTML = ui.editing
-    ? `<input class="docTitleInput" type="text" data-action="draft-edit" data-field="name" value="${escapeAttr(current.name ?? "")}" placeholder="Название сметы" />`
+    ? `<input class="docTitleInput" type="text" data-action="draft-edit" data-field="name" value="${escapeAttr(current.name ?? "")}" />`
     : escapeHtml(current.name ?? "");
 
   table.innerHTML = `
@@ -265,7 +265,7 @@ function render(state, ui) {
     <div>
       ${
         ui.editing
-          ? `<input type="text" data-action="draft-edit" data-field="customer" value="${escapeAttr(current.customer ?? "")}" placeholder="Заказчик" />`
+          ? `<input type="text" data-action="draft-edit" data-field="customer" value="${escapeAttr(current.customer ?? "")}" />`
           : `<div class="val">${escapeHtml(current.customer ?? "")}</div>`
       }
       <div class="sline"></div>
@@ -274,7 +274,7 @@ function render(state, ui) {
     <div>
       ${
         ui.editing
-          ? `<input type="text" data-action="draft-edit" data-field="executor" value="${escapeAttr(current.executor ?? "")}" placeholder="Исполнитель" />`
+          ? `<input type="text" data-action="draft-edit" data-field="executor" value="${escapeAttr(current.executor ?? "")}" />`
           : `<div class="val">${escapeHtml(current.executor ?? "")}</div>`
       }
       <div class="sline"></div>
