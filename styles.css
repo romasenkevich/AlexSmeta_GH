@@ -48,7 +48,7 @@ body.mode-mobile .doc-title { font-size: 22px; padding: 12px 12px; }
 body.mode-mobile .doc-meta { grid-template-columns: 1fr; gap: 12px; }
 body.mode-mobile .doc-meta-field input { font-size: 18px; padding: 12px 8px; }
 body.mode-mobile table.smeta th { padding: 8px 6px; font-size: 14px; }
-body.mode-mobile .total-bar { padding: 8px 8px 4px; }
+body.mode-mobile .total-bar { padding: 2px 8px 0; }
 body.mode-mobile .estimate-item { padding: 16px 14px; border-radius: 14px; }
 body.mode-mobile .estimate-item .name { font-size: 18px; }
 body.mode-mobile .estimate-item .date { font-size: 15px; }
@@ -248,7 +248,7 @@ table.smeta {
   table-layout: fixed;
 }
 .doc table.smeta {
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 /* Очень маленькие экраны: уменьшаем таблицу целиком, сохраняя пропорции */
@@ -543,9 +543,9 @@ table.smeta td.actions {
   display: flex;
   justify-content: flex-end;
   align-items: baseline;
-  padding: 6px 8px 4px;
+  padding: 2px 8px 0;
   border-top: none;
-  margin-top: 2px;
+  margin-top: 0;
 }
 /* Как у номера строки в колонке №: тот же кегль и начертание */
 .total-bar .total-line {
@@ -561,7 +561,7 @@ table.smeta td.actions {
 .actions-bar {
   display: flex;
   gap: 8px;
-  margin: 16px 0 8px 0;
+  margin: 8px 0 0;
   flex-wrap: wrap;
 }
 
@@ -654,8 +654,8 @@ table.smeta td.actions {
 .doc[data-editing="false"] .total-bar,
 .doc[data-editing="true"] .total-bar {
   border-top: none;
-  margin-top: 4px;
-  padding: 6px 8px 4px;
+  margin-top: 0;
+  padding: 2px 8px 0;
 }
 
 .doc[data-editing="false"] .total-bar .total-line,
