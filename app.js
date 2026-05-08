@@ -1,5 +1,4 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
-const MODE_KEY = "alexsmeta:viewMode:v1"; // mobile | desktop
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -104,18 +103,6 @@ function qs(sel, root = document) {
   const node = root.querySelector(sel);
   if (!node) throw new Error(`Не найден элемент: ${sel}`);
   return node;
-}
-
-function applyMode(mode) {
-  const m = mode === "desktop" ? "desktop" : "mobile";
-  document.body.classList.toggle("mode-desktop", m === "desktop");
-  document.body.classList.toggle("mode-mobile", m === "mobile");
-  const btn = document.querySelector('[data-action="toggle-mode"]');
-  if (btn) btn.textContent = m === "desktop" ? "Режим для телефона" : "Режим для ноутбука";
-  if (m === "desktop") {
-    const sidebar = document.getElementById("sidebar");
-    if (sidebar) sidebar.classList.remove("open");
-  }
 }
 
 function openSidebar() {
@@ -236,9 +223,6 @@ function main() {
   let state = ensureState(loadState());
   saveState(state);
 
-  const savedMode = localStorage.getItem(MODE_KEY) || "mobile";
-  applyMode(savedMode);
-
   function rerender() {
     render(state);
     saveState(state);
@@ -249,18 +233,13 @@ function main() {
   document.addEventListener("click", (e) => {
     const t = e.target;
     if (!(t instanceof HTMLElement)) return;
-    const action = t.dataset.action;
+    const actionEl = t.closest("[data-action]");
+    if (!(actionEl instanceof HTMLElement)) return;
+    const action = actionEl.dataset.action;
     if (!action) return;
 
     if (action === "toggle-sidebar") {
       openSidebar();
-      return;
-    }
-    if (action === "toggle-mode") {
-      const isDesktop = document.body.classList.contains("mode-desktop");
-      const next = isDesktop ? "mobile" : "desktop";
-      localStorage.setItem(MODE_KEY, next);
-      applyMode(next);
       return;
     }
 
@@ -283,7 +262,7 @@ function main() {
     }
 
     if (action === "select-estimate") {
-      const id = t.dataset.id;
+      const id = actionEl.dataset.id;
       if (!id) return;
       state = mutate(state, (s) => {
         s.selectedId = id;
@@ -305,7 +284,7 @@ function main() {
     }
 
     if (action === "delete-row") {
-      const id = t.dataset.id;
+      const id = actionEl.dataset.id;
       if (!id) return;
       state = mutate(state, (s) => {
         const est = s.estimates.find((x) => x.id === s.selectedId);

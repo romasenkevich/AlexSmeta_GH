@@ -32,7 +32,14 @@ body {
 body.mode-mobile { font-size: 18px; }
 body.mode-mobile .layout { grid-template-columns: 1fr; }
 body.mode-mobile .sidebar { display: none; }
-body.mode-mobile .sidebar.open { display: flex; position: fixed; inset: 0; z-index: 30; }
+body.mode-mobile .sidebar.open {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: transparent;
+  border-right: none;
+}
 body.mode-mobile .content { padding: 12px; }
 body.mode-mobile .doc { padding: 18px 14px; border-radius: 16px; }
 body.mode-mobile .btn { padding: 14px 18px; border-radius: 12px; font-size: 18px; }
@@ -49,18 +56,8 @@ body.mode-mobile .estimate-item .name { font-size: 18px; }
 body.mode-mobile .estimate-item .date { font-size: 15px; }
 body.mode-mobile .row-del { width: 48px; height: 48px; font-size: 24px; }
 
-body.mode-desktop { font-size: 14px; }
-body.mode-desktop .layout { grid-template-columns: 280px 1fr; }
-body.mode-desktop .sidebar { display: flex; position: static; }
-body.mode-desktop .content { padding: 24px; }
-body.mode-desktop .doc { padding: 28px 32px; border-radius: 12px; }
-body.mode-desktop .btn { padding: 8px 14px; border-radius: 6px; font-size: 14px; }
-body.mode-desktop .btn-icon { width: 32px; height: 32px; }
-body.mode-desktop .doc-meta { grid-template-columns: 1fr 1fr; gap: 24px; }
-body.mode-desktop .topbar { display: none; }
-
 .topbar {
-  display: none;
+  display: flex;
   position: sticky;
   top: 0;
   z-index: 20;
@@ -78,7 +75,6 @@ body.mode-desktop .topbar { display: none; }
   text-overflow: ellipsis;
 }
 .topbar-actions { display: flex; gap: 8px; align-items: center; }
-body.mode-mobile .topbar { display: flex; }
 body.mode-mobile .sidebar.open::before {
   content: '';
   position: absolute;
@@ -96,6 +92,23 @@ body.mode-mobile .sidebar.open > * {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.sidebar-panel {
+  width: min(33vw, 420px);
+  max-width: 90vw;
+  height: 100%;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar:not(.open) .sidebar-panel {
+  width: 100%;
+  max-width: none;
+  border-right: none;
 }
 
 .sidebar-header {
