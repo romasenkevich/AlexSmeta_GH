@@ -402,6 +402,91 @@ function buildExportHtml(estimate) {
 </html>`;
 }
 
+function buildExportInnerHtml(estimate) {
+  const rows = (estimate.items ?? []).map((it, idx) => {
+    const price = clampToNumber(it.price);
+    const qty = clampToNumber(it.qty);
+    const sum = price * qty;
+    return `
+      <tr>
+        <td class="c-num">${idx + 1}</td>
+        <td class="c-name">${escapeHtml(it.name ?? "")}</td>
+        <td class="c-unit">${escapeHtml(it.unit ?? "")}</td>
+        <td class="c-price">${formatMoney(price)}</td>
+        <td class="c-qty">${qty % 1 === 0 ? String(qty) : String(qty).replace(".", ",")}</td>
+        <td class="c-sum">${formatMoney(sum)}</td>
+      </tr>
+    `;
+  });
+
+  const total = computeTotal(estimate);
+  const currency = estimate.currency ?? "$";
+  const title = estimate.name ?? "Смета";
+  const customer = estimate.customer ?? "";
+  const executor = estimate.executor ?? "";
+
+  return `
+    <style>
+      :root { --border: #111; --muted: #444; }
+      .x-title { font-size: 18px; font-weight: 700; margin: 0 0 10px; text-align: center; }
+      .x-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 18px 0 16px; }
+      .x-meta .field { display: flex; gap: 10px; align-items: baseline; }
+      .x-meta label { font-weight: 600; }
+      .x-line { flex: 1; border-bottom: 1px solid #bbb; min-height: 16px; color: #111; padding: 0 6px; }
+
+      .x-table { width: 100%; border-collapse: collapse; }
+      .x-table th, .x-table td { border: 1px solid var(--border); padding: 8px 10px; vertical-align: top; }
+      .x-table th { background: #f3f3f3; font-size: 13px; text-align: left; }
+      .x-table td { font-size: 13px; }
+      .x-table .c-num { width: 44px; text-align: center; }
+      .x-table .c-unit { width: 90px; text-align: center; }
+      .x-table .c-price, .x-table .c-qty, .x-table .c-sum { width: 90px; text-align: right; font-variant-numeric: tabular-nums; }
+      .x-total { margin-top: 14px; display: flex; justify-content: flex-end; gap: 10px; font-weight: 700; }
+      .x-total .val { font-variant-numeric: tabular-nums; }
+      .x-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
+      .x-sign .sline { border-bottom: 1px solid #bbb; height: 18px; }
+      .x-sign .lbl { color: var(--muted); font-size: 12px; margin-top: 6px; }
+
+      @media (max-width: 560px) {
+        .x-meta { grid-template-columns: 1fr; gap: 12px; }
+      }
+    </style>
+
+    <h2 class="x-title">${escapeHtml(title)}</h2>
+
+    <div class="x-meta">
+      <div class="field"><label>Заказчик</label><div class="x-line">${escapeHtml(customer)}</div></div>
+      <div class="field"><label>Исполнитель</label><div class="x-line">${escapeHtml(executor)}</div></div>
+    </div>
+
+    <table class="x-table">
+      <thead>
+        <tr>
+          <th class="c-num">№</th>
+          <th>Наименование</th>
+          <th class="c-unit">Ед. изм</th>
+          <th class="c-price">Цена</th>
+          <th class="c-qty">Кол-во</th>
+          <th class="c-sum">Сумма</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.join("") || `<tr><td class="c-num">1</td><td></td><td class="c-unit"></td><td class="c-price">0.00</td><td class="c-qty">0</td><td class="c-sum">0.00</td></tr>`}
+      </tbody>
+    </table>
+
+    <div class="x-total">
+      <div>Итого:</div>
+      <div class="val">${formatMoney(total)} ${escapeHtml(currency)}</div>
+    </div>
+
+    <div class="x-sign">
+      <div><div class="sline"></div><div class="lbl">Заказчик</div></div>
+      <div><div class="sline"></div><div class="lbl">Исполнитель</div></div>
+    </div>
+  `;
+}
+
 function mutate(state, fn) {
   const next = structuredClone(state);
   fn(next);
@@ -449,14 +534,25 @@ function main() {
     if (action === "export") {
       const est = getSelectedEstimate(state);
       if (!est) return;
-      const w = window.open("", "_blank", "noopener,noreferrer");
-      if (!w) {
-        alert("Не удалось открыть окно экспорта (возможно, блокировщик всплывающих окон).");
-        return;
-      }
-      w.document.open();
-      w.document.write(buildExportHtml(est));
-      w.document.close();
+      const wrap = document.querySelector('[data-slot="export-wrap"]');
+      const doc = document.querySelector('[data-slot="export-doc"]');
+      if (!(wrap instanceof HTMLElement) || !(doc instanceof HTMLElement)) return;
+      doc.innerHTML = buildExportInnerHtml(est);
+      wrap.style.display = "block";
+      wrap.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    if (action === "export-close") {
+      const wrap = document.querySelector('[data-slot="export-wrap"]');
+      const doc = document.querySelector('[data-slot="export-doc"]');
+      if (wrap instanceof HTMLElement) wrap.style.display = "none";
+      if (doc instanceof HTMLElement) doc.innerHTML = "";
+      return;
+    }
+
+    if (action === "export-print") {
+      window.print();
       return;
     }
 

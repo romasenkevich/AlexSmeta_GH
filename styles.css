@@ -427,6 +427,42 @@ table.smeta td.actions { width: 40px; text-align: center; }
 .link:hover { text-decoration: underline; }
 }
 
+.exportWrap {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.exportActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.exportDoc {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+/* Print: печатаем только экспорт */
+@media print {
+  body * { visibility: hidden !important; }
+  [data-slot="export-wrap"],
+  [data-slot="export-wrap"] * { visibility: visible !important; }
+  [data-slot="export-wrap"] { display: block !important; }
+  .exportActions { display: none !important; }
+  .exportDoc {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+}
+
 .editorHeader {
   padding: 8px 6px 12px;
   border-bottom: 1px solid var(--stroke);

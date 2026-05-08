@@ -75,6 +75,14 @@
             </div>
             <button class="btn btn-danger" type="button" data-action="delete-estimate">Удалить смету</button>
           </div>
+
+          <section class="exportWrap" data-slot="export-wrap" style="display: none" aria-label="Экспорт">
+            <div class="exportActions">
+              <button class="btn" type="button" data-action="export-print">Печать / PDF</button>
+              <button class="btn" type="button" data-action="export-close">Закрыть</button>
+            </div>
+            <div class="exportDoc" data-slot="export-doc"></div>
+          </section>
         </section>
       </main>
     </div>
