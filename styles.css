@@ -244,6 +244,21 @@ table.smeta {
   margin-bottom: 16px;
   table-layout: fixed;
 }
+
+/* Очень маленькие экраны: уменьшаем таблицу целиком, сохраняя пропорции */
+@media (max-width: 380px) {
+  table.smeta {
+    --scale: 0.92;
+    transform: scale(var(--scale));
+    transform-origin: top left;
+    width: calc(100% / var(--scale));
+    margin-bottom: calc(16px / var(--scale));
+  }
+}
+
+@media (max-width: 340px) {
+  table.smeta { --scale: 0.88; }
+}
 table.smeta th, table.smeta td {
   border: 1px solid var(--border);
   padding: 0;
