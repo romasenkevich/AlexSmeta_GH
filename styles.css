@@ -280,7 +280,27 @@ table.smeta td input {
   color: var(--text);
   font-family: inherit;
 }
+table.smeta td textarea {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: inherit;
+  resize: none;
+  overflow: hidden;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 table.smeta td input:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+  background: #fff;
+}
+table.smeta td textarea:focus {
   outline: 2px solid var(--primary);
   outline-offset: -2px;
   background: #fff;
@@ -371,6 +391,22 @@ table.smeta td.actions { width: 40px; text-align: center; }
     background: #fff;
     color: var(--text);
     font-family: inherit;
+  }
+  .mfield textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 12px;
+    font-size: 16px;
+    background: #fff;
+    color: var(--text);
+    font-family: inherit;
+    resize: vertical;
+    min-height: 52px;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .mrowBottom {

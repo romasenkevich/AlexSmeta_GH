@@ -230,7 +230,9 @@ function render(state) {
     tr.dataset.rowid = it.id;
     tr.innerHTML = `
       <td class="num">${idx + 1}</td>
-      <td><input type="text" data-action="edit-item" data-id="${it.id}" data-field="name" value="${escapeAttr(it.name ?? "")}"></td>
+      <td>
+        <textarea rows="1" data-action="edit-item" data-id="${it.id}" data-field="name">${escapeHtml(it.name ?? "")}</textarea>
+      </td>
       <td class="unit"><input type="text" data-action="edit-item" data-id="${it.id}" data-field="unit" value="${escapeAttr(it.unit ?? "")}"></td>
       <td class="price"><input type="number" step="0.01" min="0" inputmode="decimal" data-action="edit-item-num" data-id="${it.id}" data-field="price" value="${escapeAttr(String(it.price ?? 0))}"></td>
       <td class="qty"><input type="number" step="0.01" min="0" inputmode="decimal" data-action="edit-item-num" data-id="${it.id}" data-field="qty" value="${escapeAttr(String(it.qty ?? 0))}"></td>
@@ -254,7 +256,7 @@ function render(state) {
       <div class="mgrid">
         <div class="mfield">
           <label>Наименование</label>
-          <input type="text" data-action="edit-item" data-id="${it.id}" data-field="name" value="${escapeAttr(it.name ?? "")}" />
+          <textarea rows="2" data-action="edit-item" data-id="${it.id}" data-field="name">${escapeHtml(it.name ?? "")}</textarea>
         </div>
         <div class="mfield">
           <label>Ед. изм</label>
@@ -619,7 +621,7 @@ function main() {
 
   document.addEventListener("input", (e) => {
     const t = e.target;
-    if (!(t instanceof HTMLInputElement)) return;
+    if (!(t instanceof HTMLInputElement) && !(t instanceof HTMLTextAreaElement)) return;
     const action = t.dataset.action;
     if (!action) return;
 
@@ -661,6 +663,10 @@ function main() {
         if (field === "unit") item.unit = t.value;
       });
       saveState(state);
+      if (t instanceof HTMLTextAreaElement) {
+        t.style.height = "auto";
+        t.style.height = `${t.scrollHeight}px`;
+      }
       return;
     }
 
