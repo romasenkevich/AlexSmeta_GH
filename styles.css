@@ -23,7 +23,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   line-height: 1.5;
   color: var(--text);
-  background: var(--bg);
+  background: #fff;
   font-size: 14px;
 }
 
@@ -215,9 +215,9 @@ body.mode-mobile .sidebar.open > * {
   max-width: 880px;
   margin: 0 auto;
   background: var(--card);
-  border: none;
-  border-radius: 22px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
   padding: 22px 20px;
 }
 
@@ -434,7 +434,7 @@ table.smeta td.actions { width: 40px; text-align: center; }
   font-size: 22px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--success);
+  color: var(--text);
 }
 
 .actions-bar {
@@ -482,8 +482,9 @@ table.smeta td.actions { width: 40px; text-align: center; }
 }
 .sign input:focus { outline: none; }
 
+/* На телефоне переносим подписи в 2 строки только в режиме редактирования */
 @media (max-width: 560px) {
-  .sign { grid-template-columns: 1fr; gap: 16px; }
+  .doc[data-editing="true"] .sign { grid-template-columns: 1fr; gap: 16px; }
 }
 
 .editorHeader {

@@ -170,6 +170,7 @@ function render(state, ui) {
   if (!estimate) {
     empty.style.display = "flex";
     doc.style.display = "none";
+    doc.dataset.editing = "false";
     topbarTitle.textContent = "Смета";
     table.innerHTML = "";
     footer.innerHTML = "";
@@ -179,6 +180,7 @@ function render(state, ui) {
 
   empty.style.display = "none";
   doc.style.display = "block";
+  doc.dataset.editing = ui.editing ? "true" : "false";
   const current = ui.editing ? ui.draft : estimate;
   topbarTitle.textContent = current.name || "Смета";
 
