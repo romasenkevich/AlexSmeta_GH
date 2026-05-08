@@ -3,27 +3,50 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Привет!</title>
-    <meta name="description" content="Базовая страница для GitHub Pages" />
+    <title>Сметы</title>
+    <meta name="description" content="Интерфейс смет для GitHub Pages" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="container">
       <header class="hero">
-        <p class="badge" aria-label="Статус">GitHub Pages</p>
-        <h1 class="title">Привет!</h1>
-        <p class="subtitle">
-          Это базовая страница. Скажите, что добавить дальше — и я сделаю.
-        </p>
+        <div class="heroTop">
+          <p class="badge" aria-label="Статус">GitHub Pages</p>
+          <div class="heroActions">
+            <button class="btn" type="button" data-action="new-estimate">Новая смета</button>
+          </div>
+        </div>
+        <h1 class="title">Сметы</h1>
+        <p class="subtitle">Создавайте несколько смет, добавляйте позиции и получайте итог.</p>
       </header>
 
-      <section class="card" aria-labelledby="next">
-        <h2 id="next">Дальше можно</h2>
-        <ul class="list">
-          <li>добавить меню и секции</li>
-          <li>подключить шрифт/тему</li>
-          <li>сделать форму обратной связи (без бэкенда)</li>
-        </ul>
+      <section class="app" aria-label="Редактор смет">
+        <aside class="panel card" aria-label="Список смет">
+          <div class="panelHeader">
+            <h2 class="panelTitle">Мои сметы</h2>
+            <button class="btn btnSmall" type="button" data-action="new-estimate">+ Добавить</button>
+          </div>
+          <div class="estimateList" data-slot="estimate-list"></div>
+          <div class="panelHint">
+            Данные сохраняются в этом браузере (localStorage).
+          </div>
+        </aside>
+
+        <section class="editor card" aria-label="Смета">
+          <div class="editorHeader" data-slot="editor-header">
+            <!-- заполняется через JS -->
+          </div>
+
+          <div class="tableWrap" role="region" aria-label="Таблица сметы" tabindex="0">
+            <table class="table" data-slot="items-table">
+              <!-- заполняется через JS -->
+            </table>
+          </div>
+
+          <div class="editorFooter" data-slot="editor-footer">
+            <!-- заполняется через JS -->
+          </div>
+        </section>
       </section>
 
       <footer class="footer">
@@ -32,8 +55,6 @@
       </footer>
     </main>
 
-    <script>
-      document.getElementById("year").textContent = String(new Date().getFullYear());
-    </script>
+    <script src="./app.js" defer></script>
   </body>
 </html>

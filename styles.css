@@ -8,6 +8,7 @@
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
   --accent: #8b5cf6;
   --accent2: #22c55e;
+  --danger: #ef4444;
 }
 
 @media (prefers-color-scheme: light) {
@@ -48,6 +49,19 @@ body {
   display: grid;
   gap: 18px;
   align-content: start;
+}
+
+.heroTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .hero {
@@ -105,6 +119,302 @@ body {
 .card h2 {
   margin: 0 0 10px;
   font-size: 18px;
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.btn:hover {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.22);
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0px);
+}
+
+.btn:focus-visible {
+  outline: 2px solid rgba(139, 92, 246, 0.55);
+  outline-offset: 2px;
+}
+
+.btnSmall {
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.btnGhost {
+  background: transparent;
+}
+
+.btnDanger {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.10);
+}
+
+.btnDanger:hover {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(239, 68, 68, 0.16);
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  padding: 14px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 6px 10px;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 16px;
+}
+
+.estimateList {
+  display: grid;
+  gap: 10px;
+  padding: 6px;
+}
+
+.estimateBtn {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  padding: 12px 12px;
+  cursor: pointer;
+  color: var(--text);
+  display: grid;
+  gap: 4px;
+}
+
+.estimateBtn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.22);
+}
+
+.estimateBtn.isActive {
+  border-color: rgba(139, 92, 246, 0.6);
+  background: rgba(139, 92, 246, 0.14);
+}
+
+.estimateBtnName {
+  font-weight: 800;
+}
+
+.estimateBtnMeta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.panelHint {
+  padding: 10px 10px 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.editor {
+  padding: 14px;
+}
+
+.editorHeader {
+  padding: 8px 6px 12px;
+  border-bottom: 1px solid var(--stroke);
+}
+
+.editorTitleRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+@media (max-width: 650px) {
+  .editorTitleRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.editorTitleActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.input:focus-visible {
+  outline: 2px solid rgba(34, 197, 94, 0.45);
+  outline-offset: 2px;
+}
+
+.inputTable {
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.inputNum {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tableWrap {
+  margin-top: 12px;
+  overflow: auto;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+  background: rgba(255,255,255,0.02);
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--stroke);
+  padding: 10px 10px;
+  vertical-align: middle;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  background: rgba(0,0,0,0.12);
+  backdrop-filter: blur(10px);
+  text-align: left;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+
+@media (prefers-color-scheme: light) {
+  .table th {
+    background: rgba(255,255,255,0.75);
+  }
+}
+
+.colNum { width: 42px; }
+.colUnit { width: 110px; }
+.colPrice { width: 100px; }
+.colQty { width: 110px; }
+.colSum { width: 130px; }
+.colActions { width: 44px; text-align: center; }
+
+.numPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.05);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.sumCell {
+  display: inline-flex;
+  justify-content: flex-end;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.iconBtn {
+  appearance: none;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(239, 68, 68, 0.14);
+}
+
+.editorFooter {
+  padding: 12px 6px 6px;
+}
+
+.totalBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.totalLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.totalLabel {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.totalValue {
+  font-size: 18px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
 
 .list {
