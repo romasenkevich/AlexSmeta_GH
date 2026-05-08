@@ -7,53 +7,74 @@
     <meta name="description" content="Интерфейс смет для GitHub Pages" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
-    <main class="container">
-      <header class="hero">
-        <div class="heroTop">
-          <p class="badge" aria-label="Статус">GitHub Pages</p>
-          <div class="heroActions">
-            <button class="btn" type="button" data-action="new-estimate">Новая смета</button>
+  <body class="mode-mobile">
+    <div class="layout">
+      <aside class="sidebar" id="sidebar" aria-label="Список смет">
+        <div class="sidebar-header">
+          <h1>Сметы</h1>
+          <div class="header-actions">
+            <button class="btn btn-icon" type="button" data-action="refresh" title="Обновить">↻</button>
           </div>
         </div>
-        <h1 class="title">Сметы</h1>
-        <p class="subtitle">Создавайте несколько смет, добавляйте позиции и получайте итог.</p>
-      </header>
+        <div class="estimates-list" data-slot="estimate-list" role="list"></div>
+        <div class="sidebar-footer">
+          <button class="btn btn-primary btn-block" type="button" data-action="new-estimate">+ Новая смета</button>
+          <div class="sidebar-note">Сохранение в браузере (localStorage).</div>
+        </div>
+      </aside>
 
-      <section class="app" aria-label="Редактор смет">
-        <aside class="panel card" aria-label="Список смет">
-          <div class="panelHeader">
-            <h2 class="panelTitle">Мои сметы</h2>
-            <button class="btn btnSmall" type="button" data-action="new-estimate">+ Добавить</button>
+      <main class="content" aria-label="Редактор сметы">
+        <div class="topbar">
+          <button class="btn btn-icon menu-btn" type="button" data-action="toggle-sidebar" title="Список смет">
+            ☰
+          </button>
+          <div class="topbar-title" data-slot="topbar-title">Смета</div>
+          <div class="topbar-actions">
+            <button class="btn" type="button" data-action="toggle-mode">Режим для ноутбука</button>
+            <button class="btn btn-icon" type="button" data-action="refresh" title="Обновить">↻</button>
           </div>
-          <div class="estimateList" data-slot="estimate-list"></div>
-          <div class="panelHint">
-            Данные сохраняются в этом браузере (localStorage).
-          </div>
-        </aside>
+        </div>
 
-        <section class="editor card" aria-label="Смета">
-          <div class="editorHeader" data-slot="editor-header">
-            <!-- заполняется через JS -->
+        <div class="content-empty" data-slot="empty-state">
+          <div class="icon" aria-hidden="true">📋</div>
+          <div>Выберите смету слева или создайте новую</div>
+          <button class="btn btn-primary" type="button" data-action="new-estimate">+ Создать смету</button>
+        </div>
+
+        <section class="doc" data-slot="doc" style="display: none">
+          <input class="doc-title" type="text" data-action="edit-estimate-name" placeholder="Название сметы" />
+
+          <div class="doc-meta">
+            <div class="doc-meta-field">
+              <label>Заказчик:</label>
+              <input type="text" data-action="edit-estimate-meta" data-field="customer" placeholder="—" />
+            </div>
+            <div class="doc-meta-field">
+              <label>Исполнитель:</label>
+              <input type="text" data-action="edit-estimate-meta" data-field="executor" placeholder="—" />
+            </div>
           </div>
 
-          <div class="tableWrap" role="region" aria-label="Таблица сметы" tabindex="0">
-            <table class="table" data-slot="items-table">
-              <!-- заполняется через JS -->
-            </table>
+          <div class="table-wrap" role="region" aria-label="Таблица сметы" tabindex="0">
+            <table class="smeta" data-slot="items-table"></table>
           </div>
 
-          <div class="editorFooter" data-slot="editor-footer">
-            <!-- заполняется через JS -->
+          <div class="actions-bar">
+            <button class="btn btn-add btn-block" type="button" data-action="add-row">+ Добавить строку</button>
+          </div>
+
+          <div class="total-bar" data-slot="editor-footer"></div>
+
+          <div class="doc-footer">
+            <div class="footer-left">
+              <span>© <span id="year"></span></span>
+              <a class="link" href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
+            <button class="btn btn-danger" type="button" data-action="delete-estimate">Удалить смету</button>
           </div>
         </section>
-      </section>
-
-      <footer class="footer">
-        <span>© <span id="year"></span></span>
-        <a class="link" href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a>
-      </footer>
-    </main>
+      </main>
+    </div>
 
     <script src="./app.js" defer></script>
   </body>

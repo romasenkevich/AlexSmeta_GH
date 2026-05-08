@@ -1,4 +1,5 @@
-const STORAGE_KEY = "alexsmeta.estimates.v1";
+const STORAGE_KEY = "alexsmeta.estimates.v2";
+const MODE_KEY = "alexsmeta:viewMode:v1"; // mobile | desktop
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -10,17 +11,12 @@ function clampToNumber(value) {
 }
 
 function formatMoney(n) {
-  const v = clampToNumber(n);
-  return new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+  return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(clampToNumber(n));
 }
 
-function formatQty(n) {
-  const v = clampToNumber(n);
-  const isInt = Math.abs(v - Math.round(v)) < 1e-9;
-  return new Intl.NumberFormat("ru-RU", {
-    minimumFractionDigits: isInt ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(v);
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return `${d.toLocaleDateString("ru-RU")} ${d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
 function loadState() {
@@ -37,20 +33,50 @@ function saveState(state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function makeEmptyEstimate(name = "Новая смета") {
+function migrateLegacyIfNeeded() {
+  const legacy = localStorage.getItem("alexsmeta.estimates.v1");
+  if (!legacy) return;
+  try {
+    const s1 = JSON.parse(legacy);
+    if (!s1 || !Array.isArray(s1.estimates)) return;
+    const now = Date.now();
+    const v2 = {
+      estimates: s1.estimates.map((e) => ({
+        id: e.id ?? uid(),
+        name: e.name ?? "Без названия",
+        customer: "",
+        executor: "",
+        currency: e.currency ?? "$",
+        updatedAt: now,
+        items: Array.isArray(e.items)
+          ? e.items.map((it) => ({
+              id: it.id ?? uid(),
+              name: it.name ?? "",
+              unit: it.unit ?? "М.пог",
+              price: clampToNumber(it.price),
+              qty: clampToNumber(it.qty),
+            }))
+          : [],
+      })),
+      selectedId: typeof s1.selectedId === "string" ? s1.selectedId : null,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(v2));
+    localStorage.removeItem("alexsmeta.estimates.v1");
+  } catch {
+    // ignore
+  }
+}
+
+function makeEmptyEstimate(name) {
+  const now = Date.now();
   return {
     id: uid(),
     name,
+    customer: "",
+    executor: "",
     currency: "$",
-    items: [
-      {
-        id: uid(),
-        name: "",
-        unit: "М.пог",
-        price: 0,
-        qty: 0,
-      },
-    ],
+    updatedAt: now,
+    items: [{ id: uid(), name: "", unit: "М.пог", price: 0, qty: 0 }],
   };
 }
 
@@ -75,168 +101,125 @@ function computeTotal(estimate) {
 }
 
 function qs(sel, root = document) {
-  const el = root.querySelector(sel);
-  if (!el) throw new Error(`Не найден элемент: ${sel}`);
-  return el;
-}
-
-function el(tag, attrs = {}, children = []) {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === "class") node.className = v;
-    else if (k === "dataset") {
-      for (const [dk, dv] of Object.entries(v)) node.dataset[dk] = String(dv);
-    } else if (k === "text") node.textContent = String(v);
-    else if (k === "html") node.innerHTML = String(v);
-    else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2), v);
-    else if (v === true) node.setAttribute(k, "");
-    else if (v === false || v == null) continue;
-    else node.setAttribute(k, String(v));
-  }
-  for (const ch of children) node.append(ch);
+  const node = root.querySelector(sel);
+  if (!node) throw new Error(`Не найден элемент: ${sel}`);
   return node;
 }
 
-function renderEstimateList(state) {
-  const list = qs('[data-slot="estimate-list"]');
-  list.innerHTML = "";
-
-  for (const estimate of state.estimates) {
-    const isActive = estimate.id === state.selectedId;
-    const button = el(
-      "button",
-      {
-        class: `estimateBtn ${isActive ? "isActive" : ""}`,
-        type: "button",
-        dataset: { action: "select-estimate", id: estimate.id },
-      },
-      [
-        el("span", { class: "estimateBtnName", text: estimate.name }),
-        el("span", { class: "estimateBtnMeta", text: `${formatMoney(computeTotal(estimate))} ${estimate.currency}` }),
-      ],
-    );
-    list.append(button);
+function applyMode(mode) {
+  const m = mode === "desktop" ? "desktop" : "mobile";
+  document.body.classList.toggle("mode-desktop", m === "desktop");
+  document.body.classList.toggle("mode-mobile", m === "mobile");
+  const btn = document.querySelector('[data-action="toggle-mode"]');
+  if (btn) btn.textContent = m === "desktop" ? "Режим для телефона" : "Режим для ноутбука";
+  if (m === "desktop") {
+    const sidebar = document.getElementById("sidebar");
+    if (sidebar) sidebar.classList.remove("open");
   }
 }
 
-function renderEditor(state) {
-  const estimate = state.estimates.find((e) => e.id === state.selectedId);
-  const header = qs('[data-slot="editor-header"]');
+function openSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  if (sidebar) sidebar.classList.add("open");
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  if (sidebar) sidebar.classList.remove("open");
+}
+
+function render(state) {
+  const list = qs('[data-slot="estimate-list"]');
+  const empty = qs('[data-slot="empty-state"]');
+  const doc = qs('[data-slot="doc"]');
+  const topbarTitle = qs('[data-slot="topbar-title"]');
   const table = qs('[data-slot="items-table"]');
   const footer = qs('[data-slot="editor-footer"]');
 
+  list.innerHTML = "";
+  const estimatesSorted = [...state.estimates].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+
+  for (const est of estimatesSorted) {
+    const active = est.id === state.selectedId;
+    const item = document.createElement("div");
+    item.className = `estimate-item ${active ? "active" : ""}`;
+    item.dataset.action = "select-estimate";
+    item.dataset.id = est.id;
+    item.innerHTML = `
+      <div class="name">${escapeHtml(est.name)}</div>
+      <div class="date">${escapeHtml(fmtDate(est.updatedAt ?? Date.now()))}</div>
+    `;
+    list.append(item);
+  }
+
+  const estimate = state.estimates.find((e) => e.id === state.selectedId);
   if (!estimate) {
-    header.textContent = "Смета не выбрана";
+    empty.style.display = "flex";
+    doc.style.display = "none";
+    topbarTitle.textContent = "Смета";
     table.innerHTML = "";
     footer.innerHTML = "";
     return;
   }
 
-  header.innerHTML = "";
-  header.append(
-    el("div", { class: "editorTitleRow" }, [
-      el("div", { class: "field" }, [
-        el("label", { class: "label", for: "estimate-name", text: "Название сметы" }),
-        el("input", {
-          class: "input",
-          id: "estimate-name",
-          value: estimate.name,
-          placeholder: "Например: Откосы",
-          dataset: { action: "edit-estimate-name" },
-        }),
-      ]),
-      el("div", { class: "editorTitleActions" }, [
-        el("button", { class: "btn", type: "button", dataset: { action: "add-row" }, text: "Добавить строку" }),
-        el("button", {
-          class: "btn btnDanger",
-          type: "button",
-          dataset: { action: "delete-estimate" },
-          text: "Удалить смету",
-        }),
-      ]),
-    ]),
-  );
+  empty.style.display = "none";
+  doc.style.display = "block";
+  topbarTitle.textContent = estimate.name || "Смета";
 
-  const thead = el("thead", {}, [
-    el("tr", {}, [
-      el("th", { class: "colNum", text: "№" }),
-      el("th", { text: "Наименование" }),
-      el("th", { class: "colUnit", text: "Ед. изм" }),
-      el("th", { class: "colPrice", text: "Цена" }),
-      el("th", { class: "colQty", text: "Кол-во" }),
-      el("th", { class: "colSum", text: "Сумма" }),
-      el("th", { class: "colActions", text: "" }),
-    ]),
-  ]);
+  const titleInput = doc.querySelector('[data-action="edit-estimate-name"]');
+  if (titleInput instanceof HTMLInputElement) titleInput.value = estimate.name ?? "";
 
-  const tbody = el("tbody");
-  estimate.items.forEach((item, idx) => {
-    const sum = computeRowSum(item);
-    tbody.append(
-      el("tr", { dataset: { rowid: item.id } }, [
-        el("td", { class: "colNum" }, [el("span", { class: "numPill", text: String(idx + 1) })]),
-        el("td", {}, [
-          el("input", {
-            class: "input inputTable",
-            value: item.name ?? "",
-            placeholder: "Например: Приклейка откосов",
-            dataset: { action: "edit-item", id: item.id, field: "name" },
-          }),
-        ]),
-        el("td", { class: "colUnit" }, [
-          el("input", {
-            class: "input inputTable",
-            value: item.unit ?? "",
-            placeholder: "М.пог",
-            dataset: { action: "edit-item", id: item.id, field: "unit" },
-          }),
-        ]),
-        el("td", { class: "colPrice" }, [
-          el("input", {
-            class: "input inputTable inputNum",
-            inputmode: "decimal",
-            value: String(item.price ?? 0),
-            dataset: { action: "edit-item-num", id: item.id, field: "price" },
-          }),
-        ]),
-        el("td", { class: "colQty" }, [
-          el("input", {
-            class: "input inputTable inputNum",
-            inputmode: "decimal",
-            value: String(item.qty ?? 0),
-            dataset: { action: "edit-item-num", id: item.id, field: "qty" },
-          }),
-        ]),
-        el("td", { class: "colSum" }, [el("span", { class: "sumCell", text: `${formatMoney(sum)} ${estimate.currency}` })]),
-        el("td", { class: "colActions" }, [
-          el("button", {
-            class: "iconBtn",
-            type: "button",
-            title: "Удалить строку",
-            dataset: { action: "delete-row", id: item.id },
-            text: "✕",
-          }),
-        ]),
-      ]),
-    );
+  const customerInput = doc.querySelector('[data-action="edit-estimate-meta"][data-field="customer"]');
+  if (customerInput instanceof HTMLInputElement) customerInput.value = estimate.customer ?? "";
+
+  const executorInput = doc.querySelector('[data-action="edit-estimate-meta"][data-field="executor"]');
+  if (executorInput instanceof HTMLInputElement) executorInput.value = estimate.executor ?? "";
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th style="width:50px">№</th>
+        <th>Наименование</th>
+        <th style="width:110px">Ед. изм</th>
+        <th style="width:100px">Цена</th>
+        <th style="width:100px">Кол-во</th>
+        <th style="width:100px">Сумма</th>
+        <th style="width:40px"></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `;
+
+  const tbody = table.querySelector("tbody");
+  if (!tbody) return;
+  estimate.items.forEach((it, idx) => {
+    const sum = computeRowSum(it);
+    const tr = document.createElement("tr");
+    tr.dataset.rowid = it.id;
+    tr.innerHTML = `
+      <td class="num">${idx + 1}</td>
+      <td><input type="text" data-action="edit-item" data-id="${it.id}" data-field="name" value="${escapeAttr(it.name ?? "")}"></td>
+      <td class="unit"><input type="text" data-action="edit-item" data-id="${it.id}" data-field="unit" value="${escapeAttr(it.unit ?? "")}"></td>
+      <td class="price"><input type="number" step="0.01" min="0" inputmode="decimal" data-action="edit-item-num" data-id="${it.id}" data-field="price" value="${escapeAttr(String(it.price ?? 0))}"></td>
+      <td class="qty"><input type="number" step="0.01" min="0" inputmode="decimal" data-action="edit-item-num" data-id="${it.id}" data-field="qty" value="${escapeAttr(String(it.qty ?? 0))}"></td>
+      <td class="sum">${estimate.currency}${formatMoney(sum)}</td>
+      <td class="actions"><button class="row-del" type="button" data-action="delete-row" data-id="${it.id}" title="Удалить строку">×</button></td>
+    `;
+    tbody.append(tr);
   });
 
-  table.innerHTML = "";
-  table.append(thead, tbody);
-
   const total = computeTotal(estimate);
-  footer.innerHTML = "";
-  footer.append(
-    el("div", { class: "totalBar" }, [
-      el("div", { class: "totalLeft" }, [
-        el("span", { class: "totalLabel", text: "Итого:" }),
-        el("span", { class: "totalValue", text: `${formatMoney(total)} ${estimate.currency}` }),
-      ]),
-      el("div", { class: "totalRight" }, [
-        el("button", { class: "btn btnGhost", type: "button", dataset: { action: "add-row" }, text: "+ Строка" }),
-      ]),
-    ]),
-  );
+  footer.innerHTML = `
+    <span class="label">Итого:</span>
+    <span class="amount">${estimate.currency}${formatMoney(total)}</span>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function escapeAttr(s) {
+  return escapeHtml(s).replace(/`/g, "&#96;");
 }
 
 function mutate(state, fn) {
@@ -249,12 +232,15 @@ function main() {
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
+  migrateLegacyIfNeeded();
   let state = ensureState(loadState());
   saveState(state);
 
+  const savedMode = localStorage.getItem(MODE_KEY) || "mobile";
+  applyMode(savedMode);
+
   function rerender() {
-    renderEstimateList(state);
-    renderEditor(state);
+    render(state);
     saveState(state);
   }
 
@@ -266,6 +252,24 @@ function main() {
     const action = t.dataset.action;
     if (!action) return;
 
+    if (action === "toggle-sidebar") {
+      openSidebar();
+      return;
+    }
+    if (action === "toggle-mode") {
+      const isDesktop = document.body.classList.contains("mode-desktop");
+      const next = isDesktop ? "mobile" : "desktop";
+      localStorage.setItem(MODE_KEY, next);
+      applyMode(next);
+      return;
+    }
+
+    if (action === "refresh") {
+      state = ensureState(loadState());
+      rerender();
+      return;
+    }
+
     if (action === "new-estimate") {
       state = mutate(state, (s) => {
         const n = s.estimates.length + 1;
@@ -274,6 +278,7 @@ function main() {
         s.selectedId = est.id;
       });
       rerender();
+      closeSidebar();
       return;
     }
 
@@ -284,6 +289,7 @@ function main() {
         s.selectedId = id;
       });
       rerender();
+      closeSidebar();
       return;
     }
 
@@ -292,6 +298,7 @@ function main() {
         const est = s.estimates.find((x) => x.id === s.selectedId);
         if (!est) return;
         est.items.push({ id: uid(), name: "", unit: "М.пог", price: 0, qty: 0 });
+        est.updatedAt = Date.now();
       });
       rerender();
       return;
@@ -305,6 +312,7 @@ function main() {
         if (!est) return;
         est.items = est.items.filter((it) => it.id !== id);
         if (est.items.length === 0) est.items = [{ id: uid(), name: "", unit: "М.пог", price: 0, qty: 0 }];
+        est.updatedAt = Date.now();
       });
       rerender();
       return;
@@ -324,9 +332,16 @@ function main() {
         }
       });
       rerender();
-      return;
     }
   });
+
+  const sidebar = document.getElementById("sidebar");
+  if (sidebar) {
+    sidebar.addEventListener("click", (e) => {
+      if (!sidebar.classList.contains("open")) return;
+      if (e.target === sidebar) closeSidebar();
+    });
+  }
 
   document.addEventListener("input", (e) => {
     const t = e.target;
@@ -339,6 +354,21 @@ function main() {
         const est = s.estimates.find((x) => x.id === s.selectedId);
         if (!est) return;
         est.name = t.value.trim() || "Без названия";
+        est.updatedAt = Date.now();
+      });
+      rerender();
+      return;
+    }
+
+    if (action === "edit-estimate-meta") {
+      const field = t.dataset.field;
+      if (!field) return;
+      state = mutate(state, (s) => {
+        const est = s.estimates.find((x) => x.id === s.selectedId);
+        if (!est) return;
+        if (field === "customer") est.customer = t.value;
+        if (field === "executor") est.executor = t.value;
+        est.updatedAt = Date.now();
       });
       rerender();
       return;
@@ -353,7 +383,9 @@ function main() {
         if (!est) return;
         const item = est.items.find((it) => it.id === id);
         if (!item) return;
-        item[field] = t.value;
+        if (field === "name") item.name = t.value;
+        if (field === "unit") item.unit = t.value;
+        est.updatedAt = Date.now();
       });
       rerender();
       return;
@@ -369,7 +401,9 @@ function main() {
         if (!est) return;
         const item = est.items.find((it) => it.id === id);
         if (!item) return;
-        item[field] = value;
+        if (field === "price") item.price = value;
+        if (field === "qty") item.qty = value;
+        est.updatedAt = Date.now();
       });
       rerender();
     }
