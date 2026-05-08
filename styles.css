@@ -48,7 +48,7 @@ body.mode-mobile .doc-title { font-size: 22px; padding: 12px 12px; }
 body.mode-mobile .doc-meta { grid-template-columns: 1fr; gap: 12px; }
 body.mode-mobile .doc-meta-field input { font-size: 18px; padding: 12px 8px; }
 body.mode-mobile table.smeta th { padding: 8px 6px; font-size: 14px; }
-body.mode-mobile .total-bar { padding: 16px 8px; }
+body.mode-mobile .total-bar { padding: 8px 8px 4px; }
 body.mode-mobile .estimate-item { padding: 16px 14px; border-radius: 14px; }
 body.mode-mobile .estimate-item .name { font-size: 18px; }
 body.mode-mobile .estimate-item .date { font-size: 15px; }
@@ -247,6 +247,9 @@ table.smeta {
   margin-bottom: 16px;
   table-layout: fixed;
 }
+.doc table.smeta {
+  margin-bottom: 8px;
+}
 
 /* Очень маленькие экраны: уменьшаем таблицу целиком, сохраняя пропорции */
 table.smeta th {
@@ -339,7 +342,13 @@ table.smeta th {
 .cellText { padding: 8px 10px; }
 .cellRight { text-align: right; font-variant-numeric: tabular-nums; }
 .cellCenter { text-align: center; }
-table.smeta td.num { text-align: center; }
+/* Колонка № — эталон размера для строки «Итого» */
+table.smeta td.num {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 400;
+  color: #111;
+}
 table.smeta td.num input { text-align: center; }
 table.smeta td.price, table.smeta td.qty, table.smeta td.sum { text-align: right; }
 table.smeta td.price input, table.smeta td.qty input { text-align: right; }
@@ -438,6 +447,11 @@ table.smeta td.actions {
     font-variant-numeric: auto;
   }
 
+  table.smeta td.num,
+  .doc .total-bar .total-line {
+    font-size: 12px;
+  }
+
   .mrow {
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -529,19 +543,19 @@ table.smeta td.actions {
   display: flex;
   justify-content: flex-end;
   align-items: baseline;
-  padding: 12px 8px;
+  padding: 6px 8px 4px;
   border-top: none;
-  margin-top: 8px;
+  margin-top: 2px;
 }
-/* Одна типографика для «Итого:» и суммы с валютой */
+/* Как у номера строки в колонке №: тот же кегль и начертание */
 .total-bar .total-line {
   display: inline-flex;
   align-items: baseline;
-  gap: 16px;
-  font-size: 22px;
-  font-weight: 700;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+  color: #111;
 }
 
 .actions-bar {
@@ -640,8 +654,8 @@ table.smeta td.actions {
 .doc[data-editing="false"] .total-bar,
 .doc[data-editing="true"] .total-bar {
   border-top: none;
-  margin-top: 14px;
-  padding: 12px 8px;
+  margin-top: 4px;
+  padding: 6px 8px 4px;
 }
 
 .doc[data-editing="false"] .total-bar .total-line,
