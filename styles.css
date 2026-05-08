@@ -49,7 +49,6 @@ body.mode-mobile .doc-meta { grid-template-columns: 1fr; gap: 12px; }
 body.mode-mobile .doc-meta-field input { font-size: 18px; padding: 12px 8px; }
 body.mode-mobile table.smeta th { padding: 8px 6px; font-size: 14px; }
 body.mode-mobile .total-bar { padding: 16px 8px; }
-body.mode-mobile .total-bar .amount { font-size: 28px; }
 body.mode-mobile .estimate-item { padding: 16px 14px; border-radius: 14px; }
 body.mode-mobile .estimate-item .name { font-size: 18px; }
 body.mode-mobile .estimate-item .date { font-size: 15px; }
@@ -530,13 +529,15 @@ table.smeta td.actions {
   display: flex;
   justify-content: flex-end;
   align-items: baseline;
-  gap: 16px;
   padding: 12px 8px;
   border-top: none;
   margin-top: 8px;
 }
-.total-bar .label { font-weight: 600; }
-.total-bar .amount {
+/* Одна типографика для «Итого:» и суммы с валютой */
+.total-bar .total-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 16px;
   font-size: 22px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -587,10 +588,12 @@ table.smeta td.actions {
 }
 .sign input:focus { outline: none; }
 
-/* На телефоне переносим подписи в 2 строки только в режиме редактирования */
+/* Заказчик / исполнитель: в обоих режимах в одну линию (две колонки), как в просмотре */
 @media (max-width: 560px) {
-  .doc[data-editing="true"] .sign { grid-template-columns: 1fr; gap: 16px; }
-  .doc[data-editing="false"] .sign { grid-template-columns: 1fr 1fr; gap: 26px; }
+  .doc .sign {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+  }
 }
 
 /* Заголовок и таблица: один «экспортный» вид в просмотре и при редактировании */
@@ -641,17 +644,9 @@ table.smeta td.actions {
   padding: 12px 8px;
 }
 
-.doc[data-editing="false"] .total-bar .label,
-.doc[data-editing="true"] .total-bar .label {
-  font-weight: 600;
+.doc[data-editing="false"] .total-bar .total-line,
+.doc[data-editing="true"] .total-bar .total-line {
   color: #111;
-}
-
-.doc[data-editing="false"] .total-bar .amount,
-.doc[data-editing="true"] .total-bar .amount {
-  color: #111;
-  font-size: 22px;
-  font-weight: 700;
 }
 
 .editorHeader {

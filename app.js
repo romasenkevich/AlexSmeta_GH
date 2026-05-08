@@ -1,5 +1,5 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
-const SITE_VERSION = "0.0.10";
+const SITE_VERSION = "0.0.11";
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -265,7 +265,7 @@ function render(state, ui) {
             : `<div class="cellText cellRight">${escapeHtml(formatDisplayNumber(it.qty ?? 0))}</div>`
         }
       </td>
-      <td class="sum"><div class="cellText cellRight" data-sum="${it.id}">${current.currency}${formatDisplayNumber(sum)}</div></td>
+      <td class="sum"><div class="cellText cellRight" data-sum="${it.id}">${formatDisplayNumber(sum)}</div></td>
       ${
         ui.editing
           ? `<td class="actions"><button class="row-del" type="button" data-action="draft-delete-row" data-id="${it.id}" title="Удалить">×</button></td>`
@@ -276,9 +276,12 @@ function render(state, ui) {
   });
 
   const total = computeTotal(current);
+  const cur = current.currency ?? "$";
   footer.innerHTML = `
-    <span class="label">Итого:</span>
-    <span class="amount">${current.currency}${formatDisplayNumber(total)}</span>
+    <div class="total-line">
+      <span>Итого:</span>
+      <span>${escapeHtml(formatDisplayNumber(total))} ${escapeHtml(cur)}</span>
+    </div>
   `;
 
   sign.innerHTML = `
@@ -539,12 +542,15 @@ function main() {
     const item = draft.items.find((it) => it.id === itemId);
     if (!item) return;
     const sumEl = document.querySelector(`[data-sum="${CSS.escape(itemId)}"]`);
-    if (sumEl) sumEl.textContent = `${draft.currency}${formatDisplayNumber(computeRowSum(item))}`;
+    if (sumEl) sumEl.textContent = formatDisplayNumber(computeRowSum(item));
     const footer = document.querySelector('[data-slot="editor-footer"]');
     if (footer) {
+      const cur = draft.currency ?? "$";
       footer.innerHTML = `
-        <span class="label">Итого:</span>
-        <span class="amount">${draft.currency}${formatDisplayNumber(computeTotal(draft))}</span>
+        <div class="total-line">
+          <span>Итого:</span>
+          <span>${escapeHtml(formatDisplayNumber(computeTotal(draft)))} ${escapeHtml(cur)}</span>
+        </div>
       `;
     }
   }
