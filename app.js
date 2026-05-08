@@ -1,4 +1,5 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
+const SITE_VERSION = "0.0.1";
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -478,6 +479,8 @@ function mutate(state, fn) {
 function main() {
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+  const verEl = document.querySelector('[data-slot="site-version"]');
+  if (verEl) verEl.textContent = SITE_VERSION;
 
   migrateLegacyIfNeeded();
   let state = ensureState(loadState());
