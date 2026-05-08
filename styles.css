@@ -212,8 +212,8 @@ body.mode-mobile .sidebar.open > * {
 .content-empty .icon { font-size: 48px; opacity: 0.5; }
 
 .doc {
-  max-width: 880px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   background: transparent;
   border: none;
   border-radius: 0;
@@ -236,7 +236,7 @@ body.mode-mobile .sidebar.open > * {
   margin: 6px 0 14px;
 }
 
-.table-wrap { overflow-x: auto; }
+/* Таблица без дополнительной обёртки */
 
 table.smeta {
   width: 100%;
@@ -335,7 +335,6 @@ table.smeta td.actions { width: 40px; text-align: center; }
 .items-mobile { display: none; }
 
 @media (max-width: 560px) {
-  .table-wrap { overflow-x: hidden; }
   table.smeta { display: table; }
   .items-mobile { display: none; }
 
