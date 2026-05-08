@@ -137,10 +137,12 @@ function updateRowSumInDom(state, itemId) {
   const item = est.items.find((it) => it.id === itemId);
   if (!item) return;
   const tr = document.querySelector(`[data-rowid="${CSS.escape(itemId)}"]`);
-  if (!tr) return;
-  const sumCell = tr.querySelector("td.sum");
-  if (!sumCell) return;
-  sumCell.textContent = `${est.currency}${formatMoney(computeRowSum(item))}`;
+  if (tr) {
+    const sumCell = tr.querySelector("td.sum");
+    if (sumCell) sumCell.textContent = `${est.currency}${formatMoney(computeRowSum(item))}`;
+  }
+  const msum = document.querySelector(`[data-msum="${CSS.escape(itemId)}"]`);
+  if (msum) msum.textContent = `${est.currency}${formatMoney(computeRowSum(item))}`;
 }
 
 function updateTopbarTitleInDom(state) {
@@ -162,6 +164,7 @@ function render(state) {
   const doc = qs('[data-slot="doc"]');
   const topbarTitle = qs('[data-slot="topbar-title"]');
   const table = qs('[data-slot="items-table"]');
+  const mobile = qs('[data-slot="items-mobile"]');
   const footer = qs('[data-slot="editor-footer"]');
 
   list.innerHTML = "";
@@ -186,6 +189,7 @@ function render(state) {
     doc.style.display = "none";
     topbarTitle.textContent = "Смета";
     table.innerHTML = "";
+    mobile.innerHTML = "";
     footer.innerHTML = "";
     return;
   }
@@ -234,6 +238,43 @@ function render(state) {
       <td class="actions"><button class="row-del" type="button" data-action="delete-row" data-id="${it.id}" title="Удалить строку">×</button></td>
     `;
     tbody.append(tr);
+  });
+
+  mobile.innerHTML = "";
+  estimate.items.forEach((it, idx) => {
+    const sum = computeRowSum(it);
+    const card = document.createElement("div");
+    card.className = "mrow";
+    card.dataset.rowid = it.id;
+    card.innerHTML = `
+      <div class="mrowTop">
+        <div class="mrowNum">#${idx + 1}</div>
+        <button class="mrowDel" type="button" data-action="delete-row" data-id="${it.id}" title="Удалить">×</button>
+      </div>
+      <div class="mgrid">
+        <div class="mfield">
+          <label>Наименование</label>
+          <input type="text" data-action="edit-item" data-id="${it.id}" data-field="name" value="${escapeAttr(it.name ?? "")}" />
+        </div>
+        <div class="mfield">
+          <label>Ед. изм</label>
+          <input type="text" data-action="edit-item" data-id="${it.id}" data-field="unit" value="${escapeAttr(it.unit ?? "")}" />
+        </div>
+        <div class="mfield">
+          <label>Цена</label>
+          <input type="number" step="0.01" min="0" inputmode="decimal" data-action="edit-item-num" data-id="${it.id}" data-field="price" value="${escapeAttr(String(it.price ?? 0))}" />
+        </div>
+        <div class="mfield">
+          <label>Кол-во</label>
+          <input type="number" step="0.01" min="0" inputmode="decimal" data-action="edit-item-num" data-id="${it.id}" data-field="qty" value="${escapeAttr(String(it.qty ?? 0))}" />
+        </div>
+      </div>
+      <div class="mrowBottom">
+        <div class="lbl">Сумма:</div>
+        <div class="val" data-msum="${it.id}">${estimate.currency}${formatMoney(sum)}</div>
+      </div>
+    `;
+    mobile.append(card);
   });
 
   const total = computeTotal(estimate);
