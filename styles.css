@@ -330,8 +330,8 @@ table.smeta td.actions { width: 40px; text-align: center; }
 
 @media (max-width: 560px) {
   .table-wrap { overflow-x: hidden; }
-  table.smeta { display: none; }
-  .items-mobile { display: grid; gap: 10px; }
+  table.smeta { display: table; }
+  .items-mobile { display: none; }
 
   .mrow {
     border: 1px solid var(--border);
@@ -426,7 +426,7 @@ table.smeta td.actions { width: 40px; text-align: center; }
   align-items: baseline;
   gap: 16px;
   padding: 12px 8px;
-  border-top: 2px solid var(--text);
+  border-top: none;
   margin-top: 8px;
 }
 .total-bar .label { font-weight: 600; }
@@ -513,7 +513,7 @@ table.smeta td.actions { width: 40px; text-align: center; }
 }
 
 .doc[data-editing="false"] .total-bar {
-  border-top: 2px solid #111;
+  border-top: none;
   margin-top: 14px;
   padding: 12px 8px;
 }
