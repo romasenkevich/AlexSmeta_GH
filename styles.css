@@ -214,11 +214,11 @@ body.mode-mobile .sidebar.open > * {
 .doc {
   max-width: 880px;
   margin: 0 auto;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  box-shadow: var(--shadow);
-  padding: 22px 20px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
 }
 
 .docActions {
