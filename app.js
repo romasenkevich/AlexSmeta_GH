@@ -158,6 +158,16 @@ function updateSelectedListItemNameInDom(state) {
   if (el) el.textContent = est.name;
 }
 
+function autosizeTextarea(node) {
+  if (!(node instanceof HTMLTextAreaElement)) return;
+  node.style.height = "auto";
+  node.style.height = `${node.scrollHeight}px`;
+}
+
+function autosizeAllTextareas(root = document) {
+  root.querySelectorAll("textarea").forEach((t) => autosizeTextarea(t));
+}
+
 function render(state) {
   const list = qs('[data-slot="estimate-list"]');
   const empty = qs('[data-slot="empty-state"]');
@@ -284,6 +294,8 @@ function render(state) {
     <span class="label">Итого:</span>
     <span class="amount">${estimate.currency}${formatMoney(total)}</span>
   `;
+
+  autosizeAllTextareas(doc);
 }
 
 function escapeHtml(s) {
@@ -663,10 +675,7 @@ function main() {
         if (field === "unit") item.unit = t.value;
       });
       saveState(state);
-      if (t instanceof HTMLTextAreaElement) {
-        t.style.height = "auto";
-        t.style.height = `${t.scrollHeight}px`;
-      }
+      autosizeTextarea(t);
       return;
     }
 
