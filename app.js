@@ -1,5 +1,5 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
-const SITE_VERSION = "0.0.1";
+const SITE_VERSION = "0.0.2";
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -197,12 +197,12 @@ function render(state, ui) {
   table.innerHTML = `
     <thead>
       <tr>
-        <th style="width:50px">№</th>
+        <th class="h-num">№</th>
         <th>Наименование</th>
-        <th style="width:110px">Ед. изм</th>
-        <th style="width:100px">Цена</th>
-        <th style="width:100px">Кол-во</th>
-        <th style="width:100px">Сумма</th>
+        <th class="h-unit">Ед. изм</th>
+        <th class="h-price">Цена</th>
+        <th class="h-qty">Кол-во</th>
+        <th class="h-sum">Сумма</th>
         ${ui.editing ? `<th style="width:40px"></th>` : ``}
       </tr>
     </thead>

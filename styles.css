@@ -249,6 +249,12 @@ table.smeta th, table.smeta td {
   padding: 0;
   vertical-align: middle;
 }
+
+table.smeta th.h-num { width: 50px; }
+table.smeta th.h-unit { width: 110px; }
+table.smeta th.h-price,
+table.smeta th.h-qty,
+table.smeta th.h-sum { width: 100px; }
 table.smeta th {
   background: #f3f3f3;
   font-weight: 600;
@@ -332,6 +338,21 @@ table.smeta td.actions { width: 40px; text-align: center; }
   .table-wrap { overflow-x: hidden; }
   table.smeta { display: table; }
   .items-mobile { display: none; }
+
+  /* Уменьшаем таблицу, чтобы помещалась на экране */
+  table.smeta th { font-size: 12px; padding: 8px 6px; }
+  table.smeta td input,
+  table.smeta td textarea { font-size: 14px; padding: 8px 6px; }
+  .cellText { padding: 8px 6px; font-size: 13px; }
+
+  table.smeta th.h-num { width: 34px; }
+  table.smeta th.h-unit { width: 72px; }
+  table.smeta th.h-price,
+  table.smeta th.h-qty,
+  table.smeta th.h-sum { width: 72px; }
+  table.smeta td.num { width: 34px; }
+  table.smeta td.unit { width: 72px; }
+  table.smeta td.price, table.smeta td.qty, table.smeta td.sum { width: 72px; }
 
   .mrow {
     border: 1px solid var(--border);
