@@ -119,45 +119,6 @@ function getSelectedEstimate(state) {
   return state.estimates.find((e) => e.id === state.selectedId) ?? null;
 }
 
-function updateTotalsInDom(state) {
-  const est = getSelectedEstimate(state);
-  if (!est) return;
-  const footer = document.querySelector('[data-slot="editor-footer"]');
-  if (!footer) return;
-  const total = computeTotal(est);
-  footer.innerHTML = `
-    <span class="label">Итого:</span>
-    <span class="amount">${est.currency}${formatMoney(total)}</span>
-  `;
-}
-
-function updateRowSumInDom(state, itemId) {
-  const est = getSelectedEstimate(state);
-  if (!est) return;
-  const item = est.items.find((it) => it.id === itemId);
-  if (!item) return;
-  const tr = document.querySelector(`[data-rowid="${CSS.escape(itemId)}"]`);
-  if (tr) {
-    const sumCell = tr.querySelector("td.sum");
-    if (sumCell) sumCell.textContent = `${est.currency}${formatMoney(computeRowSum(item))}`;
-  }
-  const msum = document.querySelector(`[data-msum="${CSS.escape(itemId)}"]`);
-  if (msum) msum.textContent = `${est.currency}${formatMoney(computeRowSum(item))}`;
-}
-
-function updateTopbarTitleInDom(state) {
-  const est = getSelectedEstimate(state);
-  const el = document.querySelector('[data-slot="topbar-title"]');
-  if (el) el.textContent = est?.name || "Смета";
-}
-
-function updateSelectedListItemNameInDom(state) {
-  const est = getSelectedEstimate(state);
-  if (!est) return;
-  const el = document.querySelector(`.estimate-item.active .name`);
-  if (el) el.textContent = est.name;
-}
-
 function autosizeTextarea(node) {
   if (!(node instanceof HTMLTextAreaElement)) return;
   node.style.height = "auto";
@@ -168,14 +129,26 @@ function autosizeAllTextareas(root = document) {
   root.querySelectorAll("textarea").forEach((t) => autosizeTextarea(t));
 }
 
-function render(state) {
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function escapeAttr(s) {
+  return escapeHtml(s).replace(/`/g, "&#96;");
+}
+
+function render(state, ui) {
   const list = qs('[data-slot="estimate-list"]');
   const empty = qs('[data-slot="empty-state"]');
   const doc = qs('[data-slot="doc"]');
   const topbarTitle = qs('[data-slot="topbar-title"]');
   const table = qs('[data-slot="items-table"]');
-  const mobile = qs('[data-slot="items-mobile"]');
   const footer = qs('[data-slot="editor-footer"]');
+  const sign = qs('[data-slot="sign"]');
+  const titleEl = qs('[data-slot="doc-title"]');
+  const editEnterBtn = qs('[data-action="edit-enter"]', doc);
+  const editSaveBtn = qs('[data-action="edit-save"]', doc);
+  const editCancelBtn = qs('[data-action="edit-cancel"]', doc);
+  const editOnlyActions = qs('[data-slot="edit-only-actions"]', doc);
 
   list.innerHTML = "";
   const estimatesSorted = [...state.estimates].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
@@ -199,23 +172,24 @@ function render(state) {
     doc.style.display = "none";
     topbarTitle.textContent = "Смета";
     table.innerHTML = "";
-    mobile.innerHTML = "";
     footer.innerHTML = "";
+    sign.innerHTML = "";
     return;
   }
 
   empty.style.display = "none";
   doc.style.display = "block";
-  topbarTitle.textContent = estimate.name || "Смета";
+  const current = ui.editing ? ui.draft : estimate;
+  topbarTitle.textContent = current.name || "Смета";
 
-  const titleInput = doc.querySelector('[data-action="edit-estimate-name"]');
-  if (titleInput instanceof HTMLInputElement) titleInput.value = estimate.name ?? "";
+  editEnterBtn.style.display = ui.editing ? "none" : "inline-flex";
+  editSaveBtn.style.display = ui.editing ? "inline-flex" : "none";
+  editCancelBtn.style.display = ui.editing ? "inline-flex" : "none";
+  editOnlyActions.style.display = ui.editing ? "block" : "none";
 
-  const customerInput = doc.querySelector('[data-action="edit-estimate-meta"][data-field="customer"]');
-  if (customerInput instanceof HTMLInputElement) customerInput.value = estimate.customer ?? "";
-
-  const executorInput = doc.querySelector('[data-action="edit-estimate-meta"][data-field="executor"]');
-  if (executorInput instanceof HTMLInputElement) executorInput.value = estimate.executor ?? "";
+  titleEl.innerHTML = ui.editing
+    ? `<input class="docTitleInput" type="text" data-action="draft-edit" data-field="name" value="${escapeAttr(current.name ?? "")}" placeholder="Название сметы" />`
+    : escapeHtml(current.name ?? "");
 
   table.innerHTML = `
     <thead>
@@ -226,7 +200,7 @@ function render(state) {
         <th style="width:100px">Цена</th>
         <th style="width:100px">Кол-во</th>
         <th style="width:100px">Сумма</th>
-        <th style="width:40px"></th>
+        ${ui.editing ? `<th style="width:40px"></th>` : ``}
       </tr>
     </thead>
     <tbody></tbody>
@@ -234,75 +208,79 @@ function render(state) {
 
   const tbody = table.querySelector("tbody");
   if (!tbody) return;
-  estimate.items.forEach((it, idx) => {
+
+  current.items.forEach((it, idx) => {
     const sum = computeRowSum(it);
     const tr = document.createElement("tr");
     tr.dataset.rowid = it.id;
     tr.innerHTML = `
       <td class="num">${idx + 1}</td>
-      <td>
-        <textarea rows="1" data-action="edit-item" data-id="${it.id}" data-field="name">${escapeHtml(it.name ?? "")}</textarea>
+      <td class="c-name">
+        ${
+          ui.editing
+            ? `<textarea rows="1" data-action="draft-item" data-id="${it.id}" data-field="name">${escapeHtml(it.name ?? "")}</textarea>`
+            : `<div class="cellText">${escapeHtml(it.name ?? "")}</div>`
+        }
       </td>
-      <td class="unit"><input type="text" data-action="edit-item" data-id="${it.id}" data-field="unit" value="${escapeAttr(it.unit ?? "")}"></td>
-      <td class="price"><input type="number" step="0.01" min="0" inputmode="decimal" data-action="edit-item-num" data-id="${it.id}" data-field="price" value="${escapeAttr(String(it.price ?? 0))}"></td>
-      <td class="qty"><input type="number" step="0.01" min="0" inputmode="decimal" data-action="edit-item-num" data-id="${it.id}" data-field="qty" value="${escapeAttr(String(it.qty ?? 0))}"></td>
-      <td class="sum">${estimate.currency}${formatMoney(sum)}</td>
-      <td class="actions"><button class="row-del" type="button" data-action="delete-row" data-id="${it.id}" title="Удалить строку">×</button></td>
+      <td class="unit">
+        ${
+          ui.editing
+            ? `<input type="text" data-action="draft-item" data-id="${it.id}" data-field="unit" value="${escapeAttr(it.unit ?? "")}">`
+            : `<div class="cellText cellCenter">${escapeHtml(it.unit ?? "")}</div>`
+        }
+      </td>
+      <td class="price">
+        ${
+          ui.editing
+            ? `<input type="number" step="0.01" min="0" inputmode="decimal" data-action="draft-item-num" data-id="${it.id}" data-field="price" value="${escapeAttr(String(it.price ?? 0))}">`
+            : `<div class="cellText cellRight">${formatMoney(it.price ?? 0)}</div>`
+        }
+      </td>
+      <td class="qty">
+        ${
+          ui.editing
+            ? `<input type="number" step="0.01" min="0" inputmode="decimal" data-action="draft-item-num" data-id="${it.id}" data-field="qty" value="${escapeAttr(String(it.qty ?? 0))}">`
+            : `<div class="cellText cellRight">${escapeHtml(String(it.qty ?? 0))}</div>`
+        }
+      </td>
+      <td class="sum"><div class="cellText cellRight" data-sum="${it.id}">${current.currency}${formatMoney(sum)}</div></td>
+      ${
+        ui.editing
+          ? `<td class="actions"><button class="row-del" type="button" data-action="draft-delete-row" data-id="${it.id}" title="Удалить">×</button></td>`
+          : ``
+      }
     `;
     tbody.append(tr);
   });
 
-  mobile.innerHTML = "";
-  estimate.items.forEach((it, idx) => {
-    const sum = computeRowSum(it);
-    const card = document.createElement("div");
-    card.className = "mrow";
-    card.dataset.rowid = it.id;
-    card.innerHTML = `
-      <div class="mrowTop">
-        <div class="mrowNum">#${idx + 1}</div>
-        <button class="mrowDel" type="button" data-action="delete-row" data-id="${it.id}" title="Удалить">×</button>
-      </div>
-      <div class="mgrid">
-        <div class="mfield">
-          <label>Наименование</label>
-          <textarea rows="2" data-action="edit-item" data-id="${it.id}" data-field="name">${escapeHtml(it.name ?? "")}</textarea>
-        </div>
-        <div class="mfield">
-          <label>Ед. изм</label>
-          <input type="text" data-action="edit-item" data-id="${it.id}" data-field="unit" value="${escapeAttr(it.unit ?? "")}" />
-        </div>
-        <div class="mfield">
-          <label>Цена</label>
-          <input type="number" step="0.01" min="0" inputmode="decimal" data-action="edit-item-num" data-id="${it.id}" data-field="price" value="${escapeAttr(String(it.price ?? 0))}" />
-        </div>
-        <div class="mfield">
-          <label>Кол-во</label>
-          <input type="number" step="0.01" min="0" inputmode="decimal" data-action="edit-item-num" data-id="${it.id}" data-field="qty" value="${escapeAttr(String(it.qty ?? 0))}" />
-        </div>
-      </div>
-      <div class="mrowBottom">
-        <div class="lbl">Сумма:</div>
-        <div class="val" data-msum="${it.id}">${estimate.currency}${formatMoney(sum)}</div>
-      </div>
-    `;
-    mobile.append(card);
-  });
-
-  const total = computeTotal(estimate);
+  const total = computeTotal(current);
   footer.innerHTML = `
     <span class="label">Итого:</span>
-    <span class="amount">${estimate.currency}${formatMoney(total)}</span>
+    <span class="amount">${current.currency}${formatMoney(total)}</span>
+  `;
+
+  sign.innerHTML = `
+    <div>
+      ${
+        ui.editing
+          ? `<input type="text" data-action="draft-edit" data-field="customer" value="${escapeAttr(current.customer ?? "")}" placeholder="Заказчик" />`
+          : `<div class="val">${escapeHtml(current.customer ?? "")}</div>`
+      }
+      <div class="sline"></div>
+      <div class="lbl">Заказчик</div>
+    </div>
+    <div>
+      ${
+        ui.editing
+          ? `<input type="text" data-action="draft-edit" data-field="executor" value="${escapeAttr(current.executor ?? "")}" placeholder="Исполнитель" />`
+          : `<div class="val">${escapeHtml(current.executor ?? "")}</div>`
+      }
+      <div class="sline"></div>
+      <div class="lbl">Исполнитель</div>
+    </div>
   `;
 
   autosizeAllTextareas(doc);
-}
-
-function escapeHtml(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-function escapeAttr(s) {
-  return escapeHtml(s).replace(/`/g, "&#96;");
 }
 
 function buildExportHtml(estimate) {
@@ -502,13 +480,50 @@ function main() {
   migrateLegacyIfNeeded();
   let state = ensureState(loadState());
   saveState(state);
+  let ui = { editing: false, draft: null };
 
   function rerender() {
-    render(state);
+    render(state, ui);
     saveState(state);
   }
 
   rerender();
+
+  function cancelEdit() {
+    ui = { editing: false, draft: null };
+    rerender();
+  }
+
+  function enterEdit() {
+    const current = getSelectedEstimate(state);
+    if (!current) return;
+    ui = { editing: true, draft: structuredClone(current) };
+    rerender();
+  }
+
+  function saveEdit() {
+    if (!ui.editing || !ui.draft) return;
+    state = mutate(state, (s) => {
+      const idx = s.estimates.findIndex((e) => e.id === ui.draft.id);
+      if (idx >= 0) s.estimates[idx] = { ...ui.draft, updatedAt: Date.now() };
+    });
+    ui = { editing: false, draft: null };
+    rerender();
+  }
+
+  function updateSumAndTotalInDom(draft, itemId) {
+    const item = draft.items.find((it) => it.id === itemId);
+    if (!item) return;
+    const sumEl = document.querySelector(`[data-sum="${CSS.escape(itemId)}"]`);
+    if (sumEl) sumEl.textContent = `${draft.currency}${formatMoney(computeRowSum(item))}`;
+    const footer = document.querySelector('[data-slot="editor-footer"]');
+    if (footer) {
+      footer.innerHTML = `
+        <span class="label">Итого:</span>
+        <span class="amount">${draft.currency}${formatMoney(computeTotal(draft))}</span>
+      `;
+    }
+  }
 
   document.addEventListener("click", (e) => {
     const t = e.target;
@@ -528,37 +543,29 @@ function main() {
     }
 
     if (action === "refresh") {
+      if (ui.editing) cancelEdit();
       state = ensureState(loadState());
       rerender();
       return;
     }
 
-    if (action === "export") {
-      const est = getSelectedEstimate(state);
-      if (!est) return;
-      const wrap = document.querySelector('[data-slot="export-wrap"]');
-      const doc = document.querySelector('[data-slot="export-doc"]');
-      if (!(wrap instanceof HTMLElement) || !(doc instanceof HTMLElement)) return;
-      doc.innerHTML = buildExportInnerHtml(est);
-      wrap.style.display = "block";
-      wrap.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (action === "edit-enter") {
+      enterEdit();
       return;
     }
 
-    if (action === "export-close") {
-      const wrap = document.querySelector('[data-slot="export-wrap"]');
-      const doc = document.querySelector('[data-slot="export-doc"]');
-      if (wrap instanceof HTMLElement) wrap.style.display = "none";
-      if (doc instanceof HTMLElement) doc.innerHTML = "";
+    if (action === "edit-cancel") {
+      cancelEdit();
       return;
     }
 
-    if (action === "export-print") {
-      window.print();
+    if (action === "edit-save") {
+      saveEdit();
       return;
     }
 
     if (action === "new-estimate") {
+      if (ui.editing) cancelEdit();
       state = mutate(state, (s) => {
         const n = s.estimates.length + 1;
         const est = makeEmptyEstimate(`Смета #${n}`);
@@ -573,6 +580,7 @@ function main() {
     if (action === "select-estimate") {
       const id = actionEl.dataset.id;
       if (!id) return;
+      if (ui.editing) cancelEdit();
       state = mutate(state, (s) => {
         s.selectedId = id;
       });
@@ -582,26 +590,18 @@ function main() {
     }
 
     if (action === "add-row") {
-      state = mutate(state, (s) => {
-        const est = s.estimates.find((x) => x.id === s.selectedId);
-        if (!est) return;
-        est.items.push({ id: uid(), name: "", unit: "М.пог", price: 0, qty: 0 });
-        est.updatedAt = Date.now();
-      });
+      if (!ui.editing || !ui.draft) return;
+      ui.draft.items.push({ id: uid(), name: "", unit: "М.пог", price: 0, qty: 0 });
       rerender();
       return;
     }
 
-    if (action === "delete-row") {
+    if (action === "draft-delete-row") {
       const id = actionEl.dataset.id;
       if (!id) return;
-      state = mutate(state, (s) => {
-        const est = s.estimates.find((x) => x.id === s.selectedId);
-        if (!est) return;
-        est.items = est.items.filter((it) => it.id !== id);
-        if (est.items.length === 0) est.items = [{ id: uid(), name: "", unit: "М.пог", price: 0, qty: 0 }];
-        est.updatedAt = Date.now();
-      });
+      if (!ui.editing || !ui.draft) return;
+      ui.draft.items = ui.draft.items.filter((it) => it.id !== id);
+      if (ui.draft.items.length === 0) ui.draft.items = [{ id: uid(), name: "", unit: "М.пог", price: 0, qty: 0 }];
       rerender();
       return;
     }
@@ -609,6 +609,7 @@ function main() {
     if (action === "delete-estimate") {
       const ok = confirm("Удалить эту смету? Это действие нельзя отменить.");
       if (!ok) return;
+      if (ui.editing) cancelEdit();
       state = mutate(state, (s) => {
         s.estimates = s.estimates.filter((x) => x.id !== s.selectedId);
         if (s.estimates.length === 0) {
@@ -637,64 +638,43 @@ function main() {
     const action = t.dataset.action;
     if (!action) return;
 
-    if (action === "edit-estimate-name") {
-      state = mutate(state, (s) => {
-        const est = s.estimates.find((x) => x.id === s.selectedId);
-        if (!est) return;
-        est.name = t.value.trim() || "Без названия";
-      });
-      saveState(state);
-      updateTopbarTitleInDom(state);
-      updateSelectedListItemNameInDom(state);
-      return;
-    }
+    if (!ui.editing || !ui.draft) return;
 
-    if (action === "edit-estimate-meta") {
+    if (action === "draft-edit") {
       const field = t.dataset.field;
       if (!field) return;
-      state = mutate(state, (s) => {
-        const est = s.estimates.find((x) => x.id === s.selectedId);
-        if (!est) return;
-        if (field === "customer") est.customer = t.value;
-        if (field === "executor") est.executor = t.value;
-      });
-      saveState(state);
+      if (field === "name") ui.draft.name = t.value.trim() || "Без названия";
+      if (field === "customer") ui.draft.customer = t.value;
+      if (field === "executor") ui.draft.executor = t.value;
+      const top = document.querySelector('[data-slot="topbar-title"]');
+      if (top && field === "name") top.textContent = ui.draft.name;
+      const activeName = document.querySelector(".estimate-item.active .name");
+      if (activeName && field === "name") activeName.textContent = ui.draft.name;
       return;
     }
 
-    if (action === "edit-item") {
+    if (action === "draft-item") {
       const id = t.dataset.id;
       const field = t.dataset.field;
       if (!id || !field) return;
-      state = mutate(state, (s) => {
-        const est = s.estimates.find((x) => x.id === s.selectedId);
-        if (!est) return;
-        const item = est.items.find((it) => it.id === id);
-        if (!item) return;
-        if (field === "name") item.name = t.value;
-        if (field === "unit") item.unit = t.value;
-      });
-      saveState(state);
+      const item = ui.draft.items.find((it) => it.id === id);
+      if (!item) return;
+      if (field === "name") item.name = t.value;
+      if (field === "unit") item.unit = t.value;
       autosizeTextarea(t);
       return;
     }
 
-    if (action === "edit-item-num") {
+    if (action === "draft-item-num") {
       const id = t.dataset.id;
       const field = t.dataset.field;
       if (!id || !field) return;
+      const item = ui.draft.items.find((it) => it.id === id);
+      if (!item) return;
       const value = clampToNumber(t.value);
-      state = mutate(state, (s) => {
-        const est = s.estimates.find((x) => x.id === s.selectedId);
-        if (!est) return;
-        const item = est.items.find((it) => it.id === id);
-        if (!item) return;
-        if (field === "price") item.price = value;
-        if (field === "qty") item.qty = value;
-      });
-      saveState(state);
-      updateRowSumInDom(state, id);
-      updateTotalsInDom(state);
+      if (field === "price") item.price = value;
+      if (field === "qty") item.qty = value;
+      updateSumAndTotalInDom(ui.draft, id);
     }
   });
 }

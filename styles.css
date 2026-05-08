@@ -215,45 +215,29 @@ body.mode-mobile .sidebar.open > * {
   max-width: 880px;
   margin: 0 auto;
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  padding: 28px 32px;
+  border: none;
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  padding: 22px 20px;
 }
 
-.doc-title {
-  font-size: 22px;
-  font-weight: 700;
+.docActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.docTitle {
+  font-size: 20px;
+  font-weight: 800;
   text-align: center;
-  border: none;
-  width: 100%;
-  background: transparent;
-  color: var(--text);
-  padding: 4px 8px;
-  border-radius: 6px;
+  margin: 6px 0 14px;
 }
-.doc-title:focus { outline: none; background: #f0f7ff; }
-
-.doc-meta {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin: 16px 0 24px 0;
-}
-.doc-meta-field { display: flex; align-items: baseline; gap: 8px; }
-.doc-meta-field label { font-weight: 600; flex-shrink: 0; }
-.doc-meta-field input {
-  flex: 1;
-  border: none;
-  border-bottom: 1px solid var(--border);
-  background: transparent;
-  padding: 4px 4px;
-  font-size: 14px;
-  color: var(--text);
-}
-.doc-meta-field input:focus { outline: none; border-bottom-color: var(--primary); }
 
 .table-wrap { overflow-x: auto; }
+
 table.smeta {
   width: 100%;
   border-collapse: collapse;
@@ -305,6 +289,21 @@ table.smeta td textarea:focus {
   outline-offset: -2px;
   background: #fff;
 }
+
+.docTitleInput {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  padding: 4px 8px;
+}
+.docTitleInput:focus { outline: none; background: #f0f7ff; border-radius: 10px; }
+
+.cellText { padding: 8px 10px; }
+.cellRight { text-align: right; font-variant-numeric: tabular-nums; }
+.cellCenter { text-align: center; }
 table.smeta td.num { text-align: center; width: 50px; }
 table.smeta td.num input { text-align: center; }
 table.smeta td.unit { width: 110px; }
@@ -463,40 +462,28 @@ table.smeta td.actions { width: 40px; text-align: center; }
 .link:hover { text-decoration: underline; }
 }
 
-.exportWrap {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
+.sign {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  margin-top: 22px;
 }
-
-.exportActions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
+.sign .sline { border-bottom: 1px solid #bbb; height: 18px; }
+.sign .lbl { color: var(--muted); font-size: 12px; margin-top: 6px; }
+.sign .val { font-size: 13px; color: #111; min-height: 18px; padding: 0 2px; }
+.sign input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0 2px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #111;
 }
+.sign input:focus { outline: none; }
 
-.exportDoc {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  padding: 16px;
-}
-
-/* Print: печатаем только экспорт */
-@media print {
-  body * { visibility: hidden !important; }
-  [data-slot="export-wrap"],
-  [data-slot="export-wrap"] * { visibility: visible !important; }
-  [data-slot="export-wrap"] { display: block !important; }
-  .exportActions { display: none !important; }
-  .exportDoc {
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-  }
+@media (max-width: 560px) {
+  .sign { grid-template-columns: 1fr; gap: 16px; }
 }
 
 .editorHeader {
