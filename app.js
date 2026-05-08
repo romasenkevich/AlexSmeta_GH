@@ -250,6 +250,117 @@ function escapeAttr(s) {
   return escapeHtml(s).replace(/`/g, "&#96;");
 }
 
+function buildExportHtml(estimate) {
+  const rows = (estimate.items ?? []).map((it, idx) => {
+    const price = clampToNumber(it.price);
+    const qty = clampToNumber(it.qty);
+    const sum = price * qty;
+    return `
+      <tr>
+        <td class="c-num">${idx + 1}</td>
+        <td class="c-name">${escapeHtml(it.name ?? "")}</td>
+        <td class="c-unit">${escapeHtml(it.unit ?? "")}</td>
+        <td class="c-price">${formatMoney(price)}</td>
+        <td class="c-qty">${qty % 1 === 0 ? String(qty) : String(qty).replace(".", ",")}</td>
+        <td class="c-sum">${formatMoney(sum)}</td>
+      </tr>
+    `;
+  });
+
+  const total = computeTotal(estimate);
+  const currency = estimate.currency ?? "$";
+  const title = estimate.name ?? "Смета";
+  const customer = estimate.customer ?? "";
+  const executor = estimate.executor ?? "";
+
+  return `<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(title)} — экспорт</title>
+    <style>
+      :root { --border: #111; --muted: #444; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #111; }
+      .page { max-width: 980px; margin: 0 auto; padding: 28px 18px 40px; }
+      .toolbar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 14px; }
+      .btn { padding: 8px 12px; border: 1px solid #bbb; background: #fff; cursor: pointer; border-radius: 8px; }
+      .title { font-size: 18px; font-weight: 700; margin: 0 0 10px; text-align: center; }
+      .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 18px 0 16px; }
+      .meta .field { display: flex; gap: 10px; align-items: baseline; }
+      .meta label { font-weight: 600; }
+      .line { flex: 1; border-bottom: 1px solid #bbb; min-height: 16px; color: #111; padding: 0 6px; }
+
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border: 1px solid var(--border); padding: 8px 10px; vertical-align: top; }
+      th { background: #f3f3f3; font-size: 13px; text-align: left; }
+      td { font-size: 13px; }
+      .c-num { width: 44px; text-align: center; }
+      .c-unit { width: 90px; text-align: center; }
+      .c-price, .c-qty, .c-sum { width: 90px; text-align: right; font-variant-numeric: tabular-nums; }
+      .totalRow { margin-top: 14px; display: flex; justify-content: flex-end; gap: 10px; font-weight: 700; }
+      .totalRow .val { font-variant-numeric: tabular-nums; }
+      .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
+      .sign .sline { border-bottom: 1px solid #bbb; height: 18px; }
+      .sign .lbl { color: var(--muted); font-size: 12px; margin-top: 6px; }
+
+      @media print {
+        .toolbar { display: none; }
+        .page { padding: 0; margin: 0; max-width: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="toolbar">
+        <button class="btn" onclick="window.print()">Печать / PDF</button>
+      </div>
+
+      <h1 class="title">${escapeHtml(title)}</h1>
+
+      <div class="meta">
+        <div class="field"><label>Заказчик</label><div class="line">${escapeHtml(customer)}</div></div>
+        <div class="field"><label>Исполнитель</label><div class="line">${escapeHtml(executor)}</div></div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th class="c-num">№</th>
+            <th>Наименование</th>
+            <th class="c-unit">Ед. изм</th>
+            <th class="c-price">Цена</th>
+            <th class="c-qty">Кол-во</th>
+            <th class="c-sum">Сумма</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.join("") || `<tr><td class="c-num">1</td><td></td><td class="c-unit"></td><td class="c-price">0.00</td><td class="c-qty">0</td><td class="c-sum">0.00</td></tr>`}
+        </tbody>
+      </table>
+
+      <div class="totalRow">
+        <div>Итого:</div>
+        <div class="val">${formatMoney(total)} ${escapeHtml(currency)}</div>
+      </div>
+
+      <div class="sign">
+        <div>
+          <div class="sline"></div>
+          <div class="lbl">Заказчик</div>
+        </div>
+        <div>
+          <div class="sline"></div>
+          <div class="lbl">Исполнитель</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`;
+}
+
 function mutate(state, fn) {
   const next = structuredClone(state);
   fn(next);
@@ -291,6 +402,20 @@ function main() {
     if (action === "refresh") {
       state = ensureState(loadState());
       rerender();
+      return;
+    }
+
+    if (action === "export") {
+      const est = getSelectedEstimate(state);
+      if (!est) return;
+      const w = window.open("", "_blank", "noopener,noreferrer");
+      if (!w) {
+        alert("Не удалось открыть окно экспорта (возможно, блокировщик всплывающих окон).");
+        return;
+      }
+      w.document.open();
+      w.document.write(buildExportHtml(est));
+      w.document.close();
       return;
     }
 
