@@ -463,10 +463,10 @@ table.smeta td.actions { width: 40px; text-align: center; }
 }
 
 .sign {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 26px;
-  margin-top: 22px;
+  margin-top: 26px;
 }
 .sign .sline { border-bottom: 1px solid #bbb; height: 18px; }
 .sign .lbl { color: var(--muted); font-size: 12px; margin-top: 6px; }
@@ -486,6 +486,47 @@ table.smeta td.actions { width: 40px; text-align: center; }
 @media (max-width: 560px) {
   .doc[data-editing="true"] .sign { grid-template-columns: 1fr; gap: 16px; }
   .doc[data-editing="false"] .sign { grid-template-columns: 1fr 1fr; gap: 26px; }
+}
+
+/* Режим просмотра: стили 1-в-1 как у экспорта */
+.doc[data-editing="false"] .docTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.doc[data-editing="false"] table.smeta th,
+.doc[data-editing="false"] table.smeta td {
+  border-color: #111;
+}
+
+.doc[data-editing="false"] table.smeta th {
+  background: #f3f3f3;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 10px 8px;
+}
+
+.doc[data-editing="false"] .cellText {
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+.doc[data-editing="false"] .total-bar {
+  border-top: 2px solid #111;
+  margin-top: 14px;
+  padding: 12px 8px;
+}
+
+.doc[data-editing="false"] .total-bar .label {
+  font-weight: 600;
+  color: #111;
+}
+
+.doc[data-editing="false"] .total-bar .amount {
+  color: #111;
+  font-size: 22px;
+  font-weight: 700;
 }
 
 .editorHeader {
