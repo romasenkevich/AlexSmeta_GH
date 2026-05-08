@@ -339,6 +339,7 @@ function buildExportHtml(estimate) {
       th { background: #f3f3f3; font-size: 13px; text-align: left; }
       td { font-size: 13px; }
       .c-num { width: 44px; text-align: center; }
+      td { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
       .c-unit { width: 90px; text-align: center; }
       .c-price, .c-qty, .c-sum { width: 90px; text-align: right; font-variant-numeric: tabular-nums; }
       .totalRow { margin-top: 14px; display: flex; justify-content: flex-end; gap: 10px; font-weight: 700; }
@@ -438,6 +439,7 @@ function buildExportInnerHtml(estimate) {
       .x-table th, .x-table td { border: 1px solid var(--border); padding: 8px 10px; vertical-align: top; }
       .x-table th { background: #f3f3f3; font-size: 13px; text-align: left; }
       .x-table td { font-size: 13px; }
+      .x-table td { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
       .x-table .c-num { width: 44px; text-align: center; }
       .x-table .c-unit { width: 90px; text-align: center; }
       .x-table .c-price, .x-table .c-qty, .x-table .c-sum { width: 90px; text-align: right; font-variant-numeric: tabular-nums; }
