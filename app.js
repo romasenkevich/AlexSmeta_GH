@@ -1,5 +1,5 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
-const SITE_VERSION = "0.0.14";
+const SITE_VERSION = "0.0.15";
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -414,7 +414,7 @@ function buildExportHtml(estimate) {
 </html>`;
 }
 
-function buildExportInnerHtml(estimate) {
+function buildExportBodyHtml(estimate) {
   const rows = (estimate.items ?? []).map((it, idx) => {
     const price = clampToNumber(it.price);
     const qty = clampToNumber(it.qty);
@@ -438,30 +438,6 @@ function buildExportInnerHtml(estimate) {
   const executor = estimate.executor ?? "";
 
   return `
-    <style>
-      :root { --border: #111; --muted: #444; }
-      .x-title { font-size: 18px; font-weight: 700; margin: 0 0 10px; text-align: center; }
-
-      .x-table { width: 100%; border-collapse: collapse; }
-      .x-table th, .x-table td { border: 1px solid var(--border); padding: 8px 10px; vertical-align: top; }
-      .x-table th { background: #f3f3f3; font-size: 13px; text-align: left; }
-      .x-table td { font-size: 13px; }
-      .x-table td { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
-      .x-table .c-num { width: 44px; text-align: center; }
-      .x-table .c-unit { width: 90px; text-align: center; }
-      .x-table .c-price, .x-table .c-qty, .x-table .c-sum { width: 90px; text-align: right; font-variant-numeric: tabular-nums; }
-      .x-total { margin-top: 4px; display: flex; justify-content: flex-end; gap: 10px; font-size: 13px; font-weight: 400; }
-      .x-total .val { font-variant-numeric: tabular-nums; }
-      .x-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
-      .x-sign .sline { border-bottom: 1px solid #bbb; height: 18px; }
-      .x-sign .lbl { color: var(--muted); font-size: 12px; margin-top: 6px; }
-      .x-sign .val { font-size: 13px; color: #111; min-height: 18px; padding: 0 2px; }
-
-      @media (max-width: 560px) {
-        .x-sign { grid-template-columns: 1fr; gap: 16px; }
-      }
-    </style>
-
     <h2 class="x-title">${escapeHtml(title)}</h2>
 
     <table class="x-table">
@@ -492,6 +468,35 @@ function buildExportInnerHtml(estimate) {
   `;
 }
 
+function buildExportInnerHtml(estimate) {
+  return `
+    <style>
+      :root { --border: #111; --muted: #444; }
+      .x-title { font-size: 18px; font-weight: 700; margin: 0 0 10px; text-align: center; }
+
+      .x-table { width: 100%; border-collapse: collapse; }
+      .x-table th, .x-table td { border: 1px solid var(--border); padding: 8px 10px; vertical-align: top; }
+      .x-table th { background: #f3f3f3; font-size: 13px; text-align: left; }
+      .x-table td { font-size: 13px; }
+      .x-table td { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+      .x-table .c-num { width: 44px; text-align: center; }
+      .x-table .c-unit { width: 90px; text-align: center; }
+      .x-table .c-price, .x-table .c-qty, .x-table .c-sum { width: 90px; text-align: right; font-variant-numeric: tabular-nums; }
+      .x-total { margin-top: 4px; display: flex; justify-content: flex-end; gap: 10px; font-size: 13px; font-weight: 400; }
+      .x-total .val { font-variant-numeric: tabular-nums; }
+      .x-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
+      .x-sign .sline { border-bottom: 1px solid #bbb; height: 18px; }
+      .x-sign .lbl { color: var(--muted); font-size: 12px; margin-top: 6px; }
+      .x-sign .val { font-size: 13px; color: #111; min-height: 18px; padding: 0 2px; }
+
+      @media (max-width: 560px) {
+        .x-sign { grid-template-columns: 1fr; gap: 16px; }
+      }
+    </style>
+    ${buildExportBodyHtml(estimate)}
+  `;
+}
+
 function mutate(state, fn) {
   const next = structuredClone(state);
   fn(next);
@@ -508,73 +513,55 @@ function pdfFilename(estimate) {
 function buildPdfExportElement(estimate) {
   const root = document.createElement("div");
   root.className = "pdf-export-root";
-  root.setAttribute("aria-hidden", "true");
-  root.innerHTML = `
-    <style>
-      .pdf-export-root {
-        width: 720px;
-        padding: 24px 18px 32px;
-        background: #fff;
-        color: #111;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      }
-    </style>
-    ${buildExportInnerHtml(estimate)}
-  `;
+  root.innerHTML = buildExportBodyHtml(estimate);
   return root;
 }
 
-function downloadPdfBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.rel = "noopener";
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+function waitForLayout() {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 80)));
+  });
 }
 
-async function createPdfBlob(estimate) {
+async function downloadEstimatePdf(estimate) {
   if (typeof window.html2pdf !== "function") {
     throw new Error("Библиотека PDF не загрузилась. Проверьте интернет и обновите страницу.");
   }
+
+  const host = document.createElement("div");
+  host.className = "pdf-export-host";
+  host.setAttribute("aria-hidden", "true");
   const el = buildPdfExportElement(estimate);
-  el.style.position = "fixed";
-  el.style.left = "-10000px";
-  el.style.top = "0";
-  document.body.append(el);
+  host.append(el);
+  document.body.append(host);
+
+  await waitForLayout();
+
   try {
-    const opt = {
-      margin: [12, 10, 12, 10],
+    await window.html2pdf().set({
+      margin: [10, 8, 10, 8],
       filename: pdfFilename(estimate),
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      image: { type: "jpeg", quality: 0.95 },
+      html2canvas: {
+        scale: 2,
+        scrollX: 0,
+        scrollY: 0,
+        backgroundColor: "#ffffff",
+        width: 720,
+        windowWidth: 720,
+      },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-    };
-    return await window.html2pdf().set(opt).from(el).outputPdf("blob");
+    }).from(el).save();
   } finally {
-    el.remove();
+    host.remove();
   }
 }
 
-async function sharePdfBlob(blob, filename, title) {
-  const file = new File([blob], filename, { type: "application/pdf" });
-  const shareData = { title, files: [file] };
-  if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
-    await navigator.share(shareData);
-    return true;
-  }
-  return false;
-}
-
-function setPdfButtonsBusy(busy) {
-  document.querySelectorAll('[data-action="pdf-download"], [data-action="pdf-telegram"]').forEach((btn) => {
-    btn.classList.toggle("is-busy", busy);
-    btn.disabled = busy;
-  });
+function setPdfButtonBusy(busy) {
+  const btn = document.querySelector('[data-action="pdf-download"]');
+  if (!btn) return;
+  btn.classList.toggle("is-busy", busy);
+  btn.disabled = busy;
 }
 
 function main() {
@@ -622,30 +609,18 @@ function main() {
     return getSelectedEstimate(state);
   }
 
-  async function runPdfExport(mode, triggerBtn) {
+  async function runPdfExport(triggerBtn) {
     const estimate = getExportEstimate();
     if (!estimate) return;
     if (triggerBtn?.classList.contains("is-busy")) return;
-    setPdfButtonsBusy(true);
+    setPdfButtonBusy(true);
     try {
-      const blob = await createPdfBlob(estimate);
-      const filename = pdfFilename(estimate);
-      const title = estimate.name || "Смета";
-      if (mode === "download") {
-        downloadPdfBlob(blob, filename);
-        return;
-      }
-      const shared = await sharePdfBlob(blob, filename, title);
-      if (!shared) {
-        downloadPdfBlob(blob, filename);
-        alert("PDF скачан. Откройте Telegram и прикрепите файл вручную.");
-      }
+      await downloadEstimatePdf(estimate);
     } catch (err) {
-      if (err && typeof err === "object" && "name" in err && err.name === "AbortError") return;
       const msg = err instanceof Error ? err.message : "Не удалось создать PDF";
       alert(msg);
     } finally {
-      setPdfButtonsBusy(false);
+      setPdfButtonBusy(false);
     }
   }
 
@@ -706,12 +681,7 @@ function main() {
     }
 
     if (action === "pdf-download") {
-      runPdfExport("download", actionEl);
-      return;
-    }
-
-    if (action === "pdf-telegram") {
-      runPdfExport("telegram", actionEl);
+      runPdfExport(actionEl);
       return;
     }
 
