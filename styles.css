@@ -266,22 +266,20 @@ body.mode-mobile .sidebar.open > * {
   border: 1px solid #111;
   padding: 8px 10px;
   vertical-align: top;
+  text-align: left;
   font-size: 13px;
   color: #111;
 }
 .pdf-export-root .x-table th {
   background: #f3f3f3;
   font-weight: 600;
-  text-align: left;
 }
-.pdf-export-root .x-table .c-num { width: 44px; text-align: center; }
-.pdf-export-root .x-table .c-unit { width: 90px; text-align: center; }
+.pdf-export-root .x-table .c-num { width: 44px; }
+.pdf-export-root .x-table .c-unit { width: 90px; }
 .pdf-export-root .x-table .c-price,
 .pdf-export-root .x-table .c-qty,
 .pdf-export-root .x-table .c-sum {
   width: 90px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
 }
 .pdf-export-root .x-table td {
   white-space: normal;
