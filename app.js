@@ -421,12 +421,12 @@ function buildExportBodyHtml(estimate) {
     const sum = price * qty;
     return `
       <tr>
-        <td class="c-num">${idx + 1}</td>
-        <td class="c-name">${escapeHtml(it.name ?? "")}</td>
-        <td class="c-unit">${escapeHtml(it.unit ?? "")}</td>
-        <td class="c-price">${formatDisplayNumber(price)}</td>
-        <td class="c-qty">${formatDisplayNumber(qty)}</td>
-        <td class="c-sum">${formatDisplayNumber(sum)}</td>
+        <td><div class="x-cell">${idx + 1}</div></td>
+        <td><div class="x-cell">${escapeHtml(it.name ?? "")}</div></td>
+        <td><div class="x-cell">${escapeHtml(it.unit ?? "")}</div></td>
+        <td><div class="x-cell">${formatDisplayNumber(price)}</div></td>
+        <td><div class="x-cell">${formatDisplayNumber(qty)}</div></td>
+        <td><div class="x-cell">${formatDisplayNumber(sum)}</div></td>
       </tr>
     `;
   });
