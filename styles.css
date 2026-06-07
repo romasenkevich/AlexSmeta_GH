@@ -261,6 +261,12 @@ body.mode-mobile .sidebar.open > * {
   border-collapse: collapse;
   table-layout: fixed;
 }
+.pdf-export-root .x-table col.x-col-num { width: 44px; }
+.pdf-export-root .x-table col.x-col-name { width: auto; }
+.pdf-export-root .x-table col.x-col-unit { width: 90px; }
+.pdf-export-root .x-table col.x-col-price { width: 90px; }
+.pdf-export-root .x-table col.x-col-qty { width: 90px; }
+.pdf-export-root .x-table col.x-col-sum { width: 90px; }
 .pdf-export-root .x-table th,
 .pdf-export-root .x-table td {
   border: 1px solid #111;
@@ -274,14 +280,10 @@ body.mode-mobile .sidebar.open > * {
   background: #f3f3f3;
   font-weight: 600;
 }
-.pdf-export-root .x-table .c-num { width: 44px; }
-.pdf-export-root .x-table .c-unit { width: 90px; }
-.pdf-export-root .x-table .c-price,
-.pdf-export-root .x-table .c-qty,
-.pdf-export-root .x-table .c-sum {
-  width: 90px;
-}
-.pdf-export-root .x-table td {
+.pdf-export-root .x-cell {
+  display: block;
+  width: 100%;
+  text-align: left;
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;

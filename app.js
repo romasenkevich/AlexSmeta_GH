@@ -1,5 +1,5 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
-const SITE_VERSION = "0.0.16";
+const SITE_VERSION = "0.0.17";
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -441,18 +441,26 @@ function buildExportBodyHtml(estimate) {
     <h2 class="x-title">${escapeHtml(title)}</h2>
 
     <table class="x-table">
+      <colgroup>
+        <col class="x-col-num" />
+        <col class="x-col-name" />
+        <col class="x-col-unit" />
+        <col class="x-col-price" />
+        <col class="x-col-qty" />
+        <col class="x-col-sum" />
+      </colgroup>
       <thead>
         <tr>
-          <th class="c-num">№</th>
-          <th>Наименование</th>
-          <th class="c-unit">Ед. изм</th>
-          <th class="c-price">Цена</th>
-          <th class="c-qty">Кол-во</th>
-          <th class="c-sum">Сумма</th>
+          <th><div class="x-cell">№</div></th>
+          <th><div class="x-cell">Наименование</div></th>
+          <th><div class="x-cell">Ед. изм</div></th>
+          <th><div class="x-cell">Цена</div></th>
+          <th><div class="x-cell">Кол-во</div></th>
+          <th><div class="x-cell">Сумма</div></th>
         </tr>
       </thead>
       <tbody>
-        ${rows.join("") || `<tr><td class="c-num">1</td><td></td><td class="c-unit"></td><td class="c-price">0</td><td class="c-qty">0</td><td class="c-sum">0</td></tr>`}
+        ${rows.join("") || `<tr><td><div class="x-cell">1</div></td><td><div class="x-cell"></div></td><td><div class="x-cell"></div></td><td><div class="x-cell">0</div></td><td><div class="x-cell">0</div></td><td><div class="x-cell">0</div></td></tr>`}
       </tbody>
     </table>
 
