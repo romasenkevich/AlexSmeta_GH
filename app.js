@@ -1,5 +1,5 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
-const SITE_VERSION = "0.0.17";
+const SITE_VERSION = "0.0.18";
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -531,7 +531,24 @@ function waitForLayout() {
   });
 }
 
-async function downloadEstimatePdf(estimate) {
+function pdfExportOptions(estimate) {
+  return {
+    margin: [10, 8, 10, 8],
+    filename: pdfFilename(estimate),
+    image: { type: "jpeg", quality: 0.95 },
+    html2canvas: {
+      scale: 2,
+      scrollX: 0,
+      scrollY: 0,
+      backgroundColor: "#ffffff",
+      width: 720,
+      windowWidth: 720,
+    },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+  };
+}
+
+async function createPdfBlob(estimate) {
   if (typeof window.html2pdf !== "function") {
     throw new Error("Библиотека PDF не загрузилась. Проверьте интернет и обновите страницу.");
   }
@@ -546,30 +563,66 @@ async function downloadEstimatePdf(estimate) {
   await waitForLayout();
 
   try {
-    await window.html2pdf().set({
-      margin: [10, 8, 10, 8],
-      filename: pdfFilename(estimate),
-      image: { type: "jpeg", quality: 0.95 },
-      html2canvas: {
-        scale: 2,
-        scrollX: 0,
-        scrollY: 0,
-        backgroundColor: "#ffffff",
-        width: 720,
-        windowWidth: 720,
-      },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    }).from(el).save();
+    return await window.html2pdf().set(pdfExportOptions(estimate)).from(el).outputPdf("blob");
   } finally {
     host.remove();
   }
 }
 
-function setPdfButtonBusy(busy) {
-  const btn = document.querySelector('[data-action="pdf-download"]');
+function downloadPdfBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  a.style.display = "none";
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+async function downloadEstimatePdf(estimate) {
+  const blob = await createPdfBlob(estimate);
+  downloadPdfBlob(blob, pdfFilename(estimate));
+}
+
+function canSharePdfFile() {
+  if (!navigator.share || !navigator.canShare) return false;
+  try {
+    const probe = new File([""], "probe.pdf", { type: "application/pdf" });
+    return navigator.canShare({ files: [probe] });
+  } catch {
+    return false;
+  }
+}
+
+async function shareEstimatePdf(estimate) {
+  const blob = await createPdfBlob(estimate);
+  const filename = pdfFilename(estimate);
+  const file = new File([blob], filename, { type: "application/pdf" });
+  const shareData = { files: [file] };
+
+  if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+    await navigator.share(shareData);
+    return;
+  }
+
+  downloadPdfBlob(blob, filename);
+  alert("Этот браузер не умеет отправлять файл напрямую. PDF сохранён — прикрепите его из «Загрузок» в Telegram или почте.");
+}
+
+function setPdfButtonsBusy(busy) {
+  document.querySelectorAll('[data-action="pdf-download"], [data-action="pdf-share"]').forEach((btn) => {
+    btn.classList.toggle("is-busy", busy);
+    btn.disabled = busy;
+  });
+}
+
+function updatePdfShareButtonVisibility() {
+  const btn = document.querySelector('[data-slot="pdf-share-btn"]');
   if (!btn) return;
-  btn.classList.toggle("is-busy", busy);
-  btn.disabled = busy;
+  btn.style.display = canSharePdfFile() ? "inline-flex" : "none";
 }
 
 function main() {
@@ -586,6 +639,7 @@ function main() {
   function rerender() {
     render(state, ui);
     saveState(state);
+    updatePdfShareButtonVisibility();
   }
 
   rerender();
@@ -617,18 +671,20 @@ function main() {
     return getSelectedEstimate(state);
   }
 
-  async function runPdfExport(triggerBtn) {
+  async function runPdfExport(mode, triggerBtn) {
     const estimate = getExportEstimate();
     if (!estimate) return;
     if (triggerBtn?.classList.contains("is-busy")) return;
-    setPdfButtonBusy(true);
+    setPdfButtonsBusy(true);
     try {
-      await downloadEstimatePdf(estimate);
+      if (mode === "share") await shareEstimatePdf(estimate);
+      else await downloadEstimatePdf(estimate);
     } catch (err) {
+      if (err && typeof err === "object" && "name" in err && err.name === "AbortError") return;
       const msg = err instanceof Error ? err.message : "Не удалось создать PDF";
       alert(msg);
     } finally {
-      setPdfButtonBusy(false);
+      setPdfButtonsBusy(false);
     }
   }
 
@@ -689,7 +745,12 @@ function main() {
     }
 
     if (action === "pdf-download") {
-      runPdfExport(actionEl);
+      runPdfExport("download", actionEl);
+      return;
+    }
+
+    if (action === "pdf-share") {
+      runPdfExport("share", actionEl);
       return;
     }
 
