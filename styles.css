@@ -227,9 +227,21 @@ body.mode-mobile .sidebar.open > * {
 .docActions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 10px;
+}
+
+.pdf-actions {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn.is-busy {
+  opacity: 0.65;
+  pointer-events: none;
 }
 
 .docTitle {

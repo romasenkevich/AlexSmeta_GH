@@ -1,5 +1,5 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
-const SITE_VERSION = "0.0.13";
+const SITE_VERSION = "0.0.14";
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -450,7 +450,7 @@ function buildExportInnerHtml(estimate) {
       .x-table .c-num { width: 44px; text-align: center; }
       .x-table .c-unit { width: 90px; text-align: center; }
       .x-table .c-price, .x-table .c-qty, .x-table .c-sum { width: 90px; text-align: right; font-variant-numeric: tabular-nums; }
-      .x-total { margin-top: 14px; display: flex; justify-content: flex-end; gap: 10px; font-weight: 700; }
+      .x-total { margin-top: 4px; display: flex; justify-content: flex-end; gap: 10px; font-size: 13px; font-weight: 400; }
       .x-total .val { font-variant-numeric: tabular-nums; }
       .x-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
       .x-sign .sline { border-bottom: 1px solid #bbb; height: 18px; }
@@ -498,6 +498,85 @@ function mutate(state, fn) {
   return next;
 }
 
+function pdfFilename(estimate) {
+  const base = String(estimate?.name ?? "smeta")
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
+    .trim();
+  return `${base || "smeta"}.pdf`;
+}
+
+function buildPdfExportElement(estimate) {
+  const root = document.createElement("div");
+  root.className = "pdf-export-root";
+  root.setAttribute("aria-hidden", "true");
+  root.innerHTML = `
+    <style>
+      .pdf-export-root {
+        width: 720px;
+        padding: 24px 18px 32px;
+        background: #fff;
+        color: #111;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      }
+    </style>
+    ${buildExportInnerHtml(estimate)}
+  `;
+  return root;
+}
+
+function downloadPdfBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+async function createPdfBlob(estimate) {
+  if (typeof window.html2pdf !== "function") {
+    throw new Error("Библиотека PDF не загрузилась. Проверьте интернет и обновите страницу.");
+  }
+  const el = buildPdfExportElement(estimate);
+  el.style.position = "fixed";
+  el.style.left = "-10000px";
+  el.style.top = "0";
+  document.body.append(el);
+  try {
+    const opt = {
+      margin: [12, 10, 12, 10],
+      filename: pdfFilename(estimate),
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    };
+    return await window.html2pdf().set(opt).from(el).outputPdf("blob");
+  } finally {
+    el.remove();
+  }
+}
+
+async function sharePdfBlob(blob, filename, title) {
+  const file = new File([blob], filename, { type: "application/pdf" });
+  const shareData = { title, files: [file] };
+  if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+    await navigator.share(shareData);
+    return true;
+  }
+  return false;
+}
+
+function setPdfButtonsBusy(busy) {
+  document.querySelectorAll('[data-action="pdf-download"], [data-action="pdf-telegram"]').forEach((btn) => {
+    btn.classList.toggle("is-busy", busy);
+    btn.disabled = busy;
+  });
+}
+
 function main() {
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
@@ -536,6 +615,38 @@ function main() {
     });
     ui = { editing: false, draft: null };
     rerender();
+  }
+
+  function getExportEstimate() {
+    if (ui.editing && ui.draft) return ui.draft;
+    return getSelectedEstimate(state);
+  }
+
+  async function runPdfExport(mode, triggerBtn) {
+    const estimate = getExportEstimate();
+    if (!estimate) return;
+    if (triggerBtn?.classList.contains("is-busy")) return;
+    setPdfButtonsBusy(true);
+    try {
+      const blob = await createPdfBlob(estimate);
+      const filename = pdfFilename(estimate);
+      const title = estimate.name || "Смета";
+      if (mode === "download") {
+        downloadPdfBlob(blob, filename);
+        return;
+      }
+      const shared = await sharePdfBlob(blob, filename, title);
+      if (!shared) {
+        downloadPdfBlob(blob, filename);
+        alert("PDF скачан. Откройте Telegram и прикрепите файл вручную.");
+      }
+    } catch (err) {
+      if (err && typeof err === "object" && "name" in err && err.name === "AbortError") return;
+      const msg = err instanceof Error ? err.message : "Не удалось создать PDF";
+      alert(msg);
+    } finally {
+      setPdfButtonsBusy(false);
+    }
   }
 
   function updateSumAndTotalInDom(draft, itemId) {
@@ -591,6 +702,16 @@ function main() {
 
     if (action === "edit-save") {
       saveEdit();
+      return;
+    }
+
+    if (action === "pdf-download") {
+      runPdfExport("download", actionEl);
+      return;
+    }
+
+    if (action === "pdf-telegram") {
+      runPdfExport("telegram", actionEl);
       return;
     }
 
