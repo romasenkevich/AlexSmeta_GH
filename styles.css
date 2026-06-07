@@ -250,6 +250,21 @@ body.mode-mobile .sidebar.open > * {
   color: #111;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 }
+.pdf-export-root--paginated {
+  padding: 0;
+}
+.pdf-export-page {
+  padding: 24px 18px 32px;
+  background: #fff;
+}
+.pdf-export-page .x-table tbody tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.pdf-page-break-before {
+  break-before: page;
+  page-break-before: always;
+}
 .pdf-export-root .x-title {
   font-size: 18px;
   font-weight: 700;

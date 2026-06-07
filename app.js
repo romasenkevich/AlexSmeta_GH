@@ -1,5 +1,9 @@
 const STORAGE_KEY = "alexsmeta.estimates.v2";
-const SITE_VERSION = "0.0.18";
+const SITE_VERSION = "0.0.19";
+
+/** Высота контента одной страницы A4 при ширине 720px (подбирается под html2pdf) */
+const PDF_PAGE_HEIGHT_PX = 940;
+const PDF_ROOT_VPAD_PX = 56;
 
 function uid() {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -414,12 +418,42 @@ function buildExportHtml(estimate) {
 </html>`;
 }
 
-function buildExportBodyHtml(estimate) {
-  const rows = (estimate.items ?? []).map((it, idx) => {
-    const price = clampToNumber(it.price);
-    const qty = clampToNumber(it.qty);
-    const sum = price * qty;
-    return `
+function buildExportTableHeadHtml() {
+  return `
+    <colgroup>
+      <col class="x-col-num" />
+      <col class="x-col-name" />
+      <col class="x-col-unit" />
+      <col class="x-col-price" />
+      <col class="x-col-qty" />
+      <col class="x-col-sum" />
+    </colgroup>
+    <thead>
+      <tr>
+        <th><div class="x-cell">№</div></th>
+        <th><div class="x-cell">Наименование</div></th>
+        <th><div class="x-cell">Ед. изм</div></th>
+        <th><div class="x-cell">Цена</div></th>
+        <th><div class="x-cell">Кол-во</div></th>
+        <th><div class="x-cell">Сумма</div></th>
+      </tr>
+    </thead>
+  `;
+}
+
+function buildExportTableRowsHtml(estimate, start = 0, end) {
+  const items = estimate.items ?? [];
+  const slice = end === undefined ? items : items.slice(start, end);
+  if (slice.length === 0) {
+    return `<tr><td><div class="x-cell">1</div></td><td><div class="x-cell"></div></td><td><div class="x-cell"></div></td><td><div class="x-cell">0</div></td><td><div class="x-cell">0</div></td><td><div class="x-cell">0</div></td></tr>`;
+  }
+  return slice
+    .map((it, i) => {
+      const idx = start + i;
+      const price = clampToNumber(it.price);
+      const qty = clampToNumber(it.qty);
+      const sum = price * qty;
+      return `
       <tr>
         <td><div class="x-cell">${idx + 1}</div></td>
         <td><div class="x-cell">${escapeHtml(it.name ?? "")}</div></td>
@@ -429,50 +463,42 @@ function buildExportBodyHtml(estimate) {
         <td><div class="x-cell">${formatDisplayNumber(sum)}</div></td>
       </tr>
     `;
-  });
+    })
+    .join("");
+}
 
+function buildExportTableHtml(estimate, start = 0, end) {
+  return `
+    <table class="x-table">
+      ${buildExportTableHeadHtml()}
+      <tbody>${buildExportTableRowsHtml(estimate, start, end)}</tbody>
+    </table>
+  `;
+}
+
+function buildExportFooterHtml(estimate) {
   const total = computeTotal(estimate);
   const currency = estimate.currency ?? "$";
-  const title = estimate.name ?? "Смета";
   const customer = estimate.customer ?? "";
   const executor = estimate.executor ?? "";
-
   return `
-    <h2 class="x-title">${escapeHtml(title)}</h2>
-
-    <table class="x-table">
-      <colgroup>
-        <col class="x-col-num" />
-        <col class="x-col-name" />
-        <col class="x-col-unit" />
-        <col class="x-col-price" />
-        <col class="x-col-qty" />
-        <col class="x-col-sum" />
-      </colgroup>
-      <thead>
-        <tr>
-          <th><div class="x-cell">№</div></th>
-          <th><div class="x-cell">Наименование</div></th>
-          <th><div class="x-cell">Ед. изм</div></th>
-          <th><div class="x-cell">Цена</div></th>
-          <th><div class="x-cell">Кол-во</div></th>
-          <th><div class="x-cell">Сумма</div></th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.join("") || `<tr><td><div class="x-cell">1</div></td><td><div class="x-cell"></div></td><td><div class="x-cell"></div></td><td><div class="x-cell">0</div></td><td><div class="x-cell">0</div></td><td><div class="x-cell">0</div></td></tr>`}
-      </tbody>
-    </table>
-
     <div class="x-total">
       <div>Итого:</div>
       <div class="val">${formatDisplayNumber(total)} ${escapeHtml(currency)}</div>
     </div>
-
     <div class="x-sign">
       <div><div class="val">${escapeHtml(customer)}</div><div class="sline"></div><div class="lbl">Заказчик</div></div>
       <div><div class="val">${escapeHtml(executor)}</div><div class="sline"></div><div class="lbl">Исполнитель</div></div>
     </div>
+  `;
+}
+
+function buildExportBodyHtml(estimate) {
+  const title = estimate.name ?? "Смета";
+  return `
+    <h2 class="x-title">${escapeHtml(title)}</h2>
+    ${buildExportTableHtml(estimate)}
+    ${buildExportFooterHtml(estimate)}
   `;
 }
 
@@ -525,14 +551,96 @@ function buildPdfExportElement(estimate) {
   return root;
 }
 
+function buildPaginatedPdfExportElement(estimate, pages) {
+  const root = document.createElement("div");
+  root.className = "pdf-export-root pdf-export-root--paginated";
+  const title = estimate.name ?? "Смета";
+
+  pages.forEach((page, pageIndex) => {
+    const pageEl = document.createElement("div");
+    pageEl.className = "pdf-export-page";
+    if (pageIndex > 0) pageEl.classList.add("pdf-page-break-before");
+
+    let html = "";
+    if (pageIndex === 0) html += `<h2 class="x-title">${escapeHtml(title)}</h2>`;
+    html += buildExportTableHtml(estimate, page.start, page.end);
+    if (pageIndex === pages.length - 1) html += buildExportFooterHtml(estimate);
+
+    pageEl.innerHTML = html;
+    root.append(pageEl);
+  });
+
+  return root;
+}
+
+function computePdfRowPages(rowHeights, blocks) {
+  const { titleH, theadH, footerH } = blocks;
+  const n = rowHeights.length;
+  if (n === 0) return [{ start: 0, end: 0 }];
+
+  const pages = [];
+  let i = 0;
+  let pageIndex = 0;
+
+  while (i < n) {
+    const overhead = pageIndex === 0 ? PDF_ROOT_VPAD_PX + titleH + theadH : PDF_ROOT_VPAD_PX + theadH;
+    const budget = PDF_PAGE_HEIGHT_PX - overhead;
+    const start = i;
+    let used = 0;
+
+    while (i < n) {
+      const rowH = rowHeights[i];
+      const extra = i === n - 1 ? footerH : 0;
+      if (used + rowH + extra > budget && used > 0) break;
+      used += rowH;
+      i++;
+    }
+
+    if (i === start) {
+      used += rowHeights[start];
+      i = start + 1;
+    }
+
+    pages.push({ start, end: i });
+    pageIndex++;
+  }
+
+  return pages;
+}
+
+async function measurePdfRowPages(estimate) {
+  const host = document.createElement("div");
+  host.className = "pdf-export-host";
+  host.setAttribute("aria-hidden", "true");
+  const measureEl = buildPdfExportElement(estimate);
+  host.append(measureEl);
+  document.body.append(host);
+  await waitForLayout();
+
+  try {
+    const titleH = measureEl.querySelector(".x-title")?.offsetHeight ?? 30;
+    const theadH = measureEl.querySelector("thead")?.offsetHeight ?? 28;
+    const rowHeights = [...measureEl.querySelectorAll("tbody tr")].map((tr) => tr.offsetHeight);
+    const totalH = measureEl.querySelector(".x-total")?.offsetHeight ?? 24;
+    const signH = measureEl.querySelector(".x-sign")?.offsetHeight ?? 80;
+    const footerH = totalH + signH + 20;
+
+    const pages = computePdfRowPages(rowHeights, { titleH, theadH, footerH });
+    const singlePage = pages.length === 1 && pages[0].start === 0 && pages[0].end === rowHeights.length;
+    return singlePage ? null : pages;
+  } finally {
+    host.remove();
+  }
+}
+
 function waitForLayout() {
   return new Promise((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 80)));
   });
 }
 
-function pdfExportOptions(estimate) {
-  return {
+function pdfExportOptions(estimate, paginated) {
+  const opt = {
     margin: [10, 8, 10, 8],
     filename: pdfFilename(estimate),
     image: { type: "jpeg", quality: 0.95 },
@@ -546,6 +654,10 @@ function pdfExportOptions(estimate) {
     },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
   };
+  if (paginated) {
+    opt.pagebreak = { mode: ["css", "legacy"], before: ".pdf-page-break-before", avoid: "tr" };
+  }
+  return opt;
 }
 
 async function createPdfBlob(estimate) {
@@ -553,17 +665,20 @@ async function createPdfBlob(estimate) {
     throw new Error("Библиотека PDF не загрузилась. Проверьте интернет и обновите страницу.");
   }
 
+  const pages = await measurePdfRowPages(estimate);
+  const paginated = Boolean(pages);
+  const el = paginated ? buildPaginatedPdfExportElement(estimate, pages) : buildPdfExportElement(estimate);
+
   const host = document.createElement("div");
   host.className = "pdf-export-host";
   host.setAttribute("aria-hidden", "true");
-  const el = buildPdfExportElement(estimate);
   host.append(el);
   document.body.append(host);
 
   await waitForLayout();
 
   try {
-    return await window.html2pdf().set(pdfExportOptions(estimate)).from(el).outputPdf("blob");
+    return await window.html2pdf().set(pdfExportOptions(estimate, paginated)).from(el).outputPdf("blob");
   } finally {
     host.remove();
   }
